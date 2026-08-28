@@ -1,5 +1,7 @@
 """Amazon Bedrock AgentCore Runtime entrypoint."""
 
+import json
+
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 
 from .agent import run_agent
@@ -13,6 +15,20 @@ service = DispatchService(StateStore("/tmp/rescue-relay-agentcore.db"))
 
 @app.entrypoint
 def invoke(payload: dict):
+    # The current AgentCore CLI sends its argument as a string under `prompt`.
+    # Keep accepting direct Runtime payloads while decoding that CLI envelope.
+    if "action" not in payload and "prompt" in payload:
+        prompt = payload["prompt"]
+        if not isinstance(prompt, str):
+            return {"error": "prompt must be a JSON object encoded as text"}
+        try:
+            decoded = json.loads(prompt)
+        except json.JSONDecodeError:
+            return {"error": "prompt must be a JSON object encoded as text"}
+        if not isinstance(decoded, dict):
+            return {"error": "prompt must be a JSON object encoded as text"}
+        payload = decoded
+
     action = payload.get("action", "scan")
     if action == "scan":
         mode = payload.get("mode", "live")

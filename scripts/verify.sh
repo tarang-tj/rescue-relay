@@ -3,6 +3,7 @@ set -euo pipefail
 
 project_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$project_dir"
+bash -n scripts/prepare-agentcore.sh
 
 if (( $# > 1 )) || { (( $# == 1 )) && [[ "$1" != "--with-docker" ]]; }; then
   printf 'Usage: %s [--with-docker]\n' "$0" >&2

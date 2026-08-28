@@ -108,13 +108,13 @@ No credentials are stored by the project. Live execution requires access to the 
 
 ## AgentCore entrypoint
 
-`src/rescue_relay/agentcore_app.py` exposes the agent through `BedrockAgentCoreApp`. Its payload accepts:
+`src/rescue_relay/agentcore_app.py` exposes the agent through `BedrockAgentCoreApp`. Its direct Runtime payload accepts:
 
 ```json
 {"action": "scan", "mode": "live"}
 ```
 
-It also supports `dashboard`, `approve`, and `resolve` actions. The runtime uses `/tmp/rescue-relay-agentcore.db`, keeping writes within AgentCore's writable runtime path. See `docs/agentcore.md` for deployment commands and production configuration.
+It also supports `dashboard`, `approve`, and `resolve` actions. The current AgentCore CLI's text-wrapped JSON invocation format is accepted and tested as well. The runtime uses `/tmp/rescue-relay-agentcore.db`, keeping writes within AgentCore's writable runtime path. Run `./scripts/prepare-agentcore.sh` to generate a pinned, AWS-IAM-protected deployment project, and see `docs/agentcore.md` for the verified deployment workflow.
 
 ## Verification
 

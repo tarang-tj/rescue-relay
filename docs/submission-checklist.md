@@ -8,6 +8,7 @@
 - [ ] Confirm the video covers problem, audience, and why it matters.
 - [ ] Add AWS Builder ID to the submission.
 - [ ] Optional: deploy the AgentCore entrypoint and add the live URL.
+- [ ] Before AgentCore deployment, run `scripts/prepare-agentcore.sh`, inspect the pinned CLI's `deploy --dry-run` output, and confirm AWS IAM authorization.
 - [ ] Optional: publish `docs/builder-post.md` on builder.aws.com with “Agents for Humans” in the title.
 - [ ] Run the full verification commands in the README from a clean clone.
 - [ ] Build and launch the Docker image on a Docker-enabled machine.

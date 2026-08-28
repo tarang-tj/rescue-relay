@@ -12,6 +12,7 @@ RescueRelay must not fabricate pantry capacity, silently create a pickup commitm
 - Draft creation is internal persistence. No outbound messaging tool exists.
 - A persisted decision state machine owns approval and rejection. Rejection declines the dispatch and closes sibling decisions.
 - Demo replay and fixture data are labeled. Live AWS execution requires explicit configuration.
+- The generated AgentCore deployment config uses AWS IAM authorization; malformed CLI prompt envelopes fail closed instead of defaulting to a live scan.
 
 ## Known production gaps
 

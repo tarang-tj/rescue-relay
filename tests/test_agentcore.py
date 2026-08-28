@@ -69,3 +69,18 @@ def test_agentcore_rejection_and_invalid_payloads(monkeypatch, tmp_path):
         "error": "unsupported action: delete_everything"
     }
     service.store.close()
+
+
+def test_agentcore_cli_prompt_envelope(monkeypatch, tmp_path):
+    service = _isolated_service(monkeypatch, tmp_path)
+
+    scanned = agentcore.invoke({"prompt": '{"action":"scan","mode":"demo"}'})
+    assert scanned["dashboard"]["impact"]["pounds_matched"] == 412
+    assert agentcore.invoke({"prompt": '{"action":"dashboard"}'})["active_run"]["status"] == (
+        "completed"
+    )
+    error = {"error": "prompt must be a JSON object encoded as text"}
+    assert agentcore.invoke({"prompt": "scan the inbox"}) == error
+    assert agentcore.invoke({"prompt": "[]"}) == error
+    assert agentcore.invoke({"prompt": {"action": "dashboard"}}) == error
+    service.store.close()
