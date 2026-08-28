@@ -15,7 +15,7 @@ This matrix separates implemented evidence from deployment and submission work t
 | README | Ready | `README.md` |
 | Architecture diagram | Ready | `docs/architecture.png`, `docs/architecture.svg`, `docs/architecture.md` |
 | Demo video, maximum five minutes | Rendered and inspected locally; public upload external | Reproducible 2:40 caption-led MP4 demonstrates the working end-to-end run, audit export, approval boundary, architecture, and impact; `scripts/record-demo.sh` regenerates it |
-| Problem, audience, and importance in pitch | Ready | Demo script sections 0:00–0:35 and 3:55–4:30 |
+| Problem, audience, and importance in pitch | Ready | Recorded cut 0:00–0:25 and 2:19–2:40; see `docs/demo-script.md` |
 | AWS Builder ID | External action | Add the entrant's Builder ID in Devpost |
 | Optional live demo | Not claimed | AgentCore entrypoint, current stable-CLI bootstrap, explicit target config, minimal CodeZip audit, AWS IAM config, and deployment guide are ready; authenticated deployment remains external |
 | Optional builder.aws.com post | Draft ready; publishing external | `docs/builder-post.md`; title already contains “Agents for Humans” |
@@ -24,10 +24,10 @@ This matrix separates implemented evidence from deployment and submission work t
 
 | Criterion | Strongest evidence | Demo moment |
 |---|---|---|
-| Technological implementation | Strands tool loop; structural hook; deterministic matcher; durable normalized event inputs; ID-and-content idempotency across store instances and restarts; authenticated live HTTP intake; persisted state machine; directly tested AgentCore entrypoint and CLI envelope; backend suite above the enforced 95% coverage floor; 5 deterministic evals; desktop/mobile browser flows | 0:35–1:25 and 3:15–3:55 |
-| Design | Responsive rescue desk; evidence timeline; pickup table; persisted draft previews; decision rail; portable audit export | 0:35–3:15 |
-| Potential impact | Specific food-rescue coordinator workflow; 412 lb scenario; transparent demo estimates; field-validation plan | 0:00–0:35 and 3:55–4:30 |
-| Creativity and originality | Quiet coordination agent rather than chat; reversible work automated while commitments remain human-owned | 2:20–3:15 |
+| Technological implementation | Strands tool loop; structural hook; deterministic matcher; durable normalized event inputs; ID-and-content idempotency across store instances and restarts; authenticated live HTTP intake; persisted state machine; directly tested AgentCore entrypoint and CLI envelope; backend suite above the enforced 95% coverage floor; 5 deterministic evals; desktop/mobile browser flows | 0:25–0:54 and 1:31–2:19 |
+| Design | Responsive rescue desk; evidence timeline; pickup table; persisted draft previews; decision rail; portable audit export | 0:54–1:31 |
+| Potential impact | Specific food-rescue coordinator workflow; 412 lb scenario; transparent demo estimates; field-validation plan | 0:08–0:25 and 2:19–2:40 |
+| Creativity and originality | Quiet coordination agent rather than chat; reversible work automated while commitments remain human-owned | 0:00–0:08 and 1:17–1:42 |
 | Presentation | Inspected 2:40 caption-led cut demonstrates the complete loop, evidence, decision transition, architecture, and impact boundary; synchronized narration tooling is included | Entire video |
 
 ## Claim boundaries

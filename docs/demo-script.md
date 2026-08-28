@@ -6,6 +6,24 @@ Run `./scripts/record-demo.sh` from the repository root to create `artifacts/res
 
 On macOS, `./scripts/narrate-demo.sh` adds a synchronized system-voice pitch and writes `artifacts/rescue-relay-demo-narrated.mp4` without re-encoding the verified video stream. The caption master remains the source of truth, so a personally recorded voiceover can replace this optional track later.
 
+### Recorded-cut timeline
+
+Use these timestamps when reviewing or describing the generated 2:40 submission candidate. They refer to the automated cut, not the longer manual outline below.
+
+| Time | Evidence on screen |
+|---|---|
+| 0:00–0:08 | Product, audience, and human-owned commitment boundary |
+| 0:08–0:25 | Coordinator problem, urgency, and visibly labeled demo environment |
+| 0:25–0:38 | Simulated offer arrival, durable receipt, and idempotent execution |
+| 0:38–0:54 | Four-step Strands tool loop and deterministic correctness boundary |
+| 0:54–1:05 | Linked donor/pantry evidence and default-deny safety boundary |
+| 1:05–1:17 | Operational pickup plan, reversible drafts, and validated audit export |
+| 1:17–1:31 | Two human decisions and the transition to a scheduled commitment |
+| 1:31–1:42 | Persisted decision boundary and caller-supplied event contract |
+| 1:42–2:05 | Shared FastAPI/AgentCore architecture and durable state model |
+| 2:05–2:19 | Strands guard, deterministic matcher, Bedrock swap, and AgentCore package |
+| 2:19–2:40 | Transparent impact estimates, field-validation caveat, and close |
+
 ## Manual 4:30 voiceover outline
 
 ## 0:00–0:35 — The human problem
