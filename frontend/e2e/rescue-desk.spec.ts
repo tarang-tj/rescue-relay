@@ -4,7 +4,7 @@ test.beforeEach(async ({ page }) => {
   const resetResponse = await page.request.post("http://127.0.0.1:8010/api/reset");
   expect(resetResponse.ok()).toBe(true);
   await page.goto("/");
-  await expect(page.locator(".empty-desk").getByRole("button", { name: "Run inbox scan" })).toBeVisible();
+  await expect(page.locator(".empty-desk").getByRole("button", { name: "Simulate offer arrival" })).toBeVisible();
 });
 
 test("runs the agent, preserves dates, rejects safely, and exports evidence", async ({ page }, testInfo) => {
@@ -15,13 +15,14 @@ test("runs the agent, preserves dates, rejects safely, and exports evidence", as
   });
 
   await expect(page).toHaveTitle(/RescueRelay/);
-  await page.locator(".empty-desk").getByRole("button", { name: "Run inbox scan" }).click();
+  await page.locator(".empty-desk").getByRole("button", { name: "Simulate offer arrival" }).click();
 
   await expect(page.getByRole("heading", { name: "Today’s proposed pickups" })).toBeVisible();
   await expect(page.getByText("Today 16:30-17:15", { exact: true })).toBeVisible();
   await expect(page.getByText("Tomorrow 09:30-10:15", { exact: true })).toBeVisible();
   await expect(page.getByText("4 drafts", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "2 decisions" })).toBeVisible();
+  await expect(page.getByText("event completed", { exact: true })).toBeVisible();
   await page.screenshot({ path: "/tmp/rescue-relay-desktop-pending.png", fullPage: true });
 
   const downloadReady = page.waitForEvent("download");
@@ -38,12 +39,12 @@ test("runs the agent, preserves dates, rejects safely, and exports evidence", as
 
   await page.screenshot({ path: `/tmp/rescue-relay-${testInfo.project.name}.png`, fullPage: true });
   await page.getByTitle("Reset demo").click();
-  await expect(page.locator(".empty-desk").getByRole("button", { name: "Run inbox scan" })).toBeVisible();
+  await expect(page.locator(".empty-desk").getByRole("button", { name: "Simulate offer arrival" })).toBeVisible();
 });
 
 test("mobile layout keeps primary controls and decisions usable", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile-chromium", "Mobile evidence flow");
-  await page.locator(".empty-desk").getByRole("button", { name: "Run inbox scan" }).click();
+  await page.locator(".empty-desk").getByRole("button", { name: "Simulate offer arrival" }).click();
 
   await expect(page.getByRole("button", { name: "Approve" }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Decline" }).first()).toBeVisible();

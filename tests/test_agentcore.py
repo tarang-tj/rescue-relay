@@ -84,3 +84,36 @@ def test_agentcore_cli_prompt_envelope(monkeypatch, tmp_path):
     assert agentcore.invoke({"prompt": "[]"}) == error
     assert agentcore.invoke({"prompt": {"action": "dashboard"}}) == error
     service.store.close()
+
+
+def test_agentcore_event_is_durable_and_idempotent(monkeypatch, tmp_path):
+    service = _isolated_service(monkeypatch, tmp_path)
+    payload = {
+        "action": "event",
+        "event_id": "ses-message-0001",
+        "source": "ses",
+        "mode": "demo",
+    }
+
+    first = agentcore.invoke(payload)
+    assert first["accepted"] is True
+    assert first["event"]["status"] == "completed"
+    assert first["event"]["run_id"] == first["dashboard"]["active_run"]["id"]
+
+    duplicate = agentcore.invoke(payload)
+    assert duplicate["accepted"] is False
+    assert duplicate["duplicate"] is True
+    assert duplicate["event"]["run_id"] == first["event"]["run_id"]
+    assert duplicate["dashboard"]["run_history"] == []
+
+    assert agentcore.invoke({"action": "event", "event_id": "short"}) == {
+        "error": "event_id must be 8-128 URL-safe identifier characters"
+    }
+    assert agentcore.invoke({"action": "event", "event_id": "invalid event id"}) == {
+        "error": "event_id must be 8-128 URL-safe identifier characters"
+    }
+    assert agentcore.invoke(
+        {"action": "event", "event_id": "ses-message-0002", "mode": "pretend"}
+    ) == {"error": "mode must be demo or live"}
+    assert agentcore.invoke({}) == {"error": "action is required"}
+    service.store.close()

@@ -9,6 +9,7 @@ flowchart TB
 
     subgraph Service[Application service]
       API[FastAPI]
+      EVENTS[Idempotent event receipts]
       LEDGER[(SQLite evidence + run ledger)]
       APPROVE[Approval state machine]
     end
@@ -21,19 +22,20 @@ flowchart TB
     end
 
     subgraph AWS[AWS production path]
+      SOURCE[Inbox event / schedule]
       CORE[Amazon Bedrock AgentCore Runtime]
       OBS[CloudWatch / OpenTelemetry]
       BEDROCK[Amazon Bedrock]
     end
 
-    UI --> API
-    API --> MODEL
+    UI -->|simulated offer event| API
+    API --> EVENTS --> MODEL
     MODEL --> GUARD --> TOOLS
     TOOLS --> MATCH
     TOOLS --> LEDGER
     LEDGER --> UI
     DECIDE --> API --> APPROVE --> LEDGER
-    CORE --> API
+    SOURCE -->|stable event ID| CORE --> EVENTS
     MODEL -. live mode .-> BEDROCK
     CORE -. telemetry .-> OBS
 ```
@@ -46,6 +48,8 @@ flowchart TB
 4. The agent has no outbound send tool.
 5. The decision state machine is the only path from `awaiting_approval` to `scheduled`; rejection moves the dispatch to `declined` and rejects sibling decisions atomically.
 6. Message drafts and audit bundles are durable records, but neither creates an external side effect.
+7. An offer event is atomically claimed before execution. A duplicate event ID returns the original receipt and cannot rerun the agent.
+8. Live HTTP events require a configured bearer token; the AgentCore runtime is configured for AWS IAM authorization.
 
 ## Runtime modes
 
@@ -56,4 +60,4 @@ flowchart TB
 
 Both modes execute the same Strands `Agent`, tools, hook, matcher, persistence layer, and frontend.
 
-The local product runs on demand. In production, a scheduler or inbox event source invokes a single AgentCore `scan`; that trigger is deliberately outside the current trust boundary and is documented as future integration work rather than demo functionality.
+The local product demonstrates asynchronous ingestion with a labeled simulated inbox event. FastAPI persists a receipt, returns `202 Accepted`, and executes the Strands run as a background task; the UI polls the receipt and surfaces the result only when complete or failed. AgentCore exposes the same idempotent `event` action for an AWS event source. Connecting a real cursor-based inbox and replacing runtime-local SQLite with a shared store remain production integration work and are not claimed by the demo.

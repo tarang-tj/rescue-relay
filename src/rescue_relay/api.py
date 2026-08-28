@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import os
 from datetime import UTC, datetime
+from hmac import compare_digest
 from pathlib import Path
+from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .agent import run_agent
-from .domain import DecisionState
+from .domain import DecisionState, IntakeEvent
+from .events import claim_offer_event, process_offer_event
 from .service import DispatchService
 from .store import StateStore
 
@@ -24,6 +27,18 @@ class RunRequest(BaseModel):
 class ResolutionRequest(BaseModel):
     state: DecisionState
     note: str | None = None
+
+
+class OfferEventRequest(BaseModel):
+    event_id: str = Field(min_length=8, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]+$")
+    source: str = Field(default="demo_inbox", min_length=3, max_length=64)
+    mode: Literal["demo", "live"] = "demo"
+
+
+class OfferEventResponse(BaseModel):
+    accepted: bool
+    duplicate: bool
+    event: IntakeEvent
 
 
 def create_app(database_path: str | Path | None = None) -> FastAPI:
@@ -38,7 +53,7 @@ def create_app(database_path: str | Path | None = None) -> FastAPI:
         allow_origins=os.getenv("RESCUERELAY_ORIGINS", "http://localhost:5173").split(","),
         allow_credentials=False,
         allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type"],
+        allow_headers=["Authorization", "Content-Type"],
     )
 
     @app.get("/api/health")
@@ -65,6 +80,51 @@ def create_app(database_path: str | Path | None = None) -> FastAPI:
             raise HTTPException(status_code=503, detail=f"Agent run failed loudly: {exc}") from exc
         return store.get()
 
+    @app.post(
+        "/api/events/offers",
+        response_model=OfferEventResponse,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    def receive_offer_event(
+        request: OfferEventRequest,
+        background_tasks: BackgroundTasks,
+        response: Response,
+        authorization: str | None = Header(default=None),
+    ):
+        if request.mode == "live":
+            expected = os.getenv("RESCUERELAY_EVENT_TOKEN")
+            if not expected:
+                raise HTTPException(status_code=503, detail="Live event intake is not configured")
+            supplied = authorization.removeprefix("Bearer ") if authorization else ""
+            if not compare_digest(supplied, expected):
+                raise HTTPException(status_code=401, detail="Invalid event authorization")
+
+        event, accepted = claim_offer_event(
+            store,
+            event_id=request.event_id,
+            source=request.source,
+            mode=request.mode,
+        )
+        if accepted:
+            background_tasks.add_task(
+                process_offer_event,
+                store,
+                service,
+                event_id=event.id,
+                mode=request.mode,
+                runner=run_agent,
+            )
+        else:
+            response.status_code = status.HTTP_200_OK
+        return OfferEventResponse(accepted=accepted, duplicate=not accepted, event=event)
+
+    @app.get("/api/events/{event_id}", response_model=IntakeEvent)
+    def event_status(event_id: str):
+        try:
+            return store.get_event(event_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Event not found") from exc
+
     @app.post("/api/decisions/{decision_id}/approve")
     def approve(decision_id: str):
         try:
@@ -90,6 +150,7 @@ def create_app(database_path: str | Path | None = None) -> FastAPI:
                 "outbound_send_capability": False,
                 "commitments_require_persisted_approval": True,
                 "demo_data_labeled": True,
+                "offer_events_are_idempotent": True,
             },
             "dashboard": store.get(),
         }

@@ -40,6 +40,7 @@ const EMPTY: Dashboard = {
   evidence: [],
   impact: { pounds_matched: 0, meals_estimated: 0, minutes_saved: 0 },
   run_history: [],
+  intake_events: [],
 };
 
 const NAV = [
@@ -86,7 +87,7 @@ function Sidebar() {
           <span className="status-pulse" />
           <div>
             <strong>Replay ready</strong>
-            <span>Background schedule off</span>
+            <span>Event intake armed</span>
           </div>
         </div>
         <a className="nav-item" href="/api/health">
@@ -105,11 +106,12 @@ function EmptyDesk({ onRun, loading }: { onRun: () => void; loading: boolean }) 
       <p className="eyebrow">Demo workspace ready</p>
       <h2>Turn four donor messages into a safe pickup plan.</h2>
       <p>
-        The replay runs through the real Strands tool loop with labeled sample data. No messages are sent.
+        Simulate one inbox event. RescueRelay runs the real Strands tool loop quietly and surfaces only
+        the decisions that need you. No messages are sent.
       </p>
       <button className="primary-button" onClick={onRun} disabled={loading} type="button">
         {loading ? <LoaderCircle className="spin" size={17} /> : <Play size={17} fill="currentColor" />}
-        {loading ? "Agent is working…" : "Run inbox scan"}
+        {loading ? "Agent is working…" : "Simulate offer arrival"}
       </button>
     </section>
   );
@@ -128,7 +130,7 @@ function RunTimeline({ steps, selected, onSelect }: {
           <p className="eyebrow">Latest agent run</p>
           <h2>From offer to dispatch plan</h2>
         </div>
-        <span className="mode-pill"><Sparkles size={12} /> deterministic replay</span>
+        <span className="mode-pill"><Sparkles size={12} /> event-triggered replay</span>
       </div>
       <div className="timeline">
         {steps.map((step, index) => {
@@ -355,7 +357,16 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.scan();
+      const eventId = `demo-${Date.now()}-${crypto.randomUUID()}`;
+      await api.triggerDemoEvent(eventId);
+      let event = await api.event(eventId);
+      for (let attempt = 0; !["completed", "failed"].includes(event.status) && attempt < 100; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 100));
+        event = await api.event(eventId);
+      }
+      if (event.status === "failed") throw new Error(`Background run failed: ${event.error}`);
+      if (event.status !== "completed") throw new Error("Background run did not finish within 10 seconds");
+      const data = await api.dashboard();
       setDashboard(data);
       setSelectedStep(data.active_run?.steps.at(-1)?.id ?? null);
     } catch (cause) {
@@ -417,6 +428,9 @@ export default function App() {
           </div>
           <div className="header-actions">
             <span className="demo-label"><ShieldCheck size={14} /> labeled demo data</span>
+            {dashboard.intake_events[0] && (
+              <span className="demo-label"><Activity size={14} /> event {dashboard.intake_events[0].status}</span>
+            )}
             {hasRun && (
               <>
                 <button className="icon-button" onClick={downloadAudit} title="Download audit evidence" type="button">
@@ -429,7 +443,7 @@ export default function App() {
             )}
             <button className="primary-button" onClick={runScan} disabled={loading} type="button">
               {loading ? <LoaderCircle className="spin" size={17} /> : <Play size={17} fill="currentColor" />}
-              {loading ? "Agent is working…" : hasRun ? "Run again" : "Run inbox scan"}
+              {loading ? "Agent is working…" : hasRun ? "Simulate another event" : "Simulate offer arrival"}
             </button>
           </div>
         </header>
@@ -450,6 +464,11 @@ export default function App() {
               <div className="run-footnote">
                 <span><TimerReset size={14} /> Last run {new Date(dashboard.active_run!.completed_at ?? dashboard.active_run!.started_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
                 <span><Boxes size={14} /> {dashboard.active_run?.model_id}</span>
+                <span>
+                  <Activity size={14} /> Event {dashboard.intake_events[0]
+                    ? `${dashboard.intake_events[0].source} · ${dashboard.intake_events[0].id.slice(0, 16)}…`
+                    : "manual diagnostic"}
+                </span>
                 <span><MapPin size={14} /> Local demo workspace</span>
               </div>
             </div>

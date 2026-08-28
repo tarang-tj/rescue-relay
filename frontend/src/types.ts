@@ -78,6 +78,23 @@ export interface AgentRun {
   error: string | null;
 }
 
+export interface IntakeEvent {
+  id: string;
+  source: string;
+  mode: string;
+  status: "received" | "processing" | "completed" | "failed";
+  received_at: string;
+  completed_at: string | null;
+  run_id: string | null;
+  error: string | null;
+}
+
+export interface OfferEventResponse {
+  accepted: boolean;
+  duplicate: boolean;
+  event: IntakeEvent;
+}
+
 export interface Dashboard {
   active_run: AgentRun | null;
   dispatches: Dispatch[];
@@ -86,4 +103,5 @@ export interface Dashboard {
   evidence: Evidence[];
   impact: { pounds_matched: number; meals_estimated: number; minutes_saved: number };
   run_history: AgentRun[];
+  intake_events: IntakeEvent[];
 }

@@ -29,6 +29,13 @@ class DecisionState(StrEnum):
     REJECTED = "rejected"
 
 
+class IntakeEventStatus(StrEnum):
+    RECEIVED = "received"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class Offer(BaseModel):
     id: str
     donor: str
@@ -130,6 +137,17 @@ class AgentRun(BaseModel):
     error: str | None = None
 
 
+class IntakeEvent(BaseModel):
+    id: str
+    source: str
+    mode: str
+    status: IntakeEventStatus = IntakeEventStatus.RECEIVED
+    received_at: datetime
+    completed_at: datetime | None = None
+    run_id: str | None = None
+    error: str | None = None
+
+
 class Impact(BaseModel):
     pounds_matched: int
     meals_estimated: int
@@ -144,3 +162,4 @@ class Dashboard(BaseModel):
     evidence: list[Evidence]
     impact: Impact
     run_history: list[AgentRun] = Field(default_factory=list)
+    intake_events: list[IntakeEvent] = Field(default_factory=list)

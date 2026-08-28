@@ -8,7 +8,17 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from .domain import AgentRun, Dashboard, DecisionState, DispatchState, Evidence, Impact, RunStep
+from .domain import (
+    AgentRun,
+    Dashboard,
+    DecisionState,
+    DispatchState,
+    Evidence,
+    Impact,
+    IntakeEvent,
+    IntakeEventStatus,
+    RunStep,
+)
 
 
 def empty_dashboard() -> Dashboard:
@@ -20,6 +30,7 @@ def empty_dashboard() -> Dashboard:
         evidence=[],
         impact=Impact(pounds_matched=0, meals_estimated=0, minutes_saved=0),
         run_history=[],
+        intake_events=[],
     )
 
 
@@ -91,6 +102,50 @@ class StateStore:
             dashboard.evidence.extend(item for item in evidence if item.id not in known)
 
         return self.update(mutate)
+
+    def claim_event(self, event: IntakeEvent) -> tuple[IntakeEvent, bool]:
+        """Persist an event exactly once and report whether this caller owns processing it."""
+
+        accepted = False
+
+        def mutate(dashboard: Dashboard) -> None:
+            nonlocal accepted
+            if any(item.id == event.id for item in dashboard.intake_events):
+                return
+            dashboard.intake_events.insert(0, event)
+            dashboard.intake_events = dashboard.intake_events[:25]
+            accepted = True
+
+        dashboard = self.update(mutate)
+        persisted = next(item for item in dashboard.intake_events if item.id == event.id)
+        return persisted, accepted
+
+    def update_event(
+        self,
+        event_id: str,
+        status: IntakeEventStatus,
+        *,
+        completed_at: Any = None,
+        run_id: str | None = None,
+        error: str | None = None,
+    ) -> IntakeEvent:
+        def mutate(dashboard: Dashboard) -> None:
+            event = next((item for item in dashboard.intake_events if item.id == event_id), None)
+            if event is None:
+                raise KeyError(event_id)
+            event.status = status
+            event.completed_at = completed_at
+            event.run_id = run_id
+            event.error = error
+
+        dashboard = self.update(mutate)
+        return next(item for item in dashboard.intake_events if item.id == event_id)
+
+    def get_event(self, event_id: str) -> IntakeEvent:
+        event = next((item for item in self.get().intake_events if item.id == event_id), None)
+        if event is None:
+            raise KeyError(event_id)
+        return event
 
     def resolve_decision(
         self, decision_id: str, state: DecisionState, resolved_at: Any, note: str | None = None

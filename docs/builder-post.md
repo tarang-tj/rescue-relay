@@ -18,7 +18,9 @@ The agent can propose a two-pantry split, but the dispatch remains `awaiting_app
 
 ## Repeatable locally, production-ready on AWS
 
-The local demo uses a clearly labeled scripted model implementing the Strands model interface. It drives the actual tool loop and makes the demo reproducible. Live mode swaps that adapter for Amazon Bedrock. A `BedrockAgentCoreApp` entrypoint provides the production deployment seam, with AgentCore observability as the next operational layer. The local UI honestly labels background scheduling as off; a production event source or schedule is a deployment integration, not a capability we fake for the demo.
+The local demo uses a clearly labeled scripted model implementing the Strands model interface. It drives the actual tool loop and makes the demo reproducible. A simulated offer-arrival event is atomically claimed before the asynchronous run begins; each receipt moves through received, processing, completed, or failed, and a repeated event ID cannot trigger duplicate work. Live HTTP intake requires an explicit bearer secret.
+
+Live mode swaps the replay adapter for Amazon Bedrock. The `BedrockAgentCoreApp` entrypoint exposes the same idempotent event action behind AWS IAM, providing the production deployment seam with AgentCore observability as the next operational layer. The demo proves event handling but does not pretend its local fixture is a connected inbox.
 
 ## The larger lesson
 

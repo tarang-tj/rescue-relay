@@ -1,4 +1,4 @@
-import type { Dashboard } from "./types";
+import type { Dashboard, IntakeEvent, OfferEventResponse } from "./types";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -14,7 +14,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   dashboard: () => request<Dashboard>("/api/dashboard"),
-  scan: () => request<Dashboard>("/api/runs", { method: "POST", body: JSON.stringify({ mode: "demo" }) }),
+  triggerDemoEvent: (eventId: string) => request<OfferEventResponse>("/api/events/offers", {
+    method: "POST",
+    body: JSON.stringify({ event_id: eventId, source: "demo_inbox", mode: "demo" }),
+  }),
+  event: (eventId: string) => request<IntakeEvent>(`/api/events/${eventId}`),
   approve: (id: string) => request<Dashboard>(`/api/decisions/${id}/approve`, { method: "POST" }),
   resolve: (id: string, state: "approved" | "rejected") => request<Dashboard>(
     `/api/decisions/${id}/resolve`,

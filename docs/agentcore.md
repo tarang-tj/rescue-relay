@@ -42,11 +42,13 @@ The current AgentCore CLI wraps its argument under `prompt`. RescueRelay accepts
 
 ```bash
 npx --yes @aws/agentcore@0.28.1 invoke --runtime RescueRelay \
-  --prompt '{"action":"scan","mode":"live"}'
+  --prompt '{"action":"event","event_id":"ses-message-0001","source":"ses","mode":"live"}'
 
 npx --yes @aws/agentcore@0.28.1 invoke --runtime RescueRelay \
   --prompt '{"action":"dashboard"}'
 ```
+
+The source integration must derive `event_id` from a stable source-message identifier. Replaying the same ID returns `duplicate: true` and the original receipt without starting another agent run. The lower-level `{"action":"scan","mode":"live"}` action remains available for an operator-initiated diagnostic run.
 
 Approval and explicit resolution use the same form:
 
@@ -58,7 +60,7 @@ npx --yes @aws/agentcore@0.28.1 invoke --runtime RescueRelay \
   --prompt '{"action":"resolve","decision_id":"DECISION_ID","state":"rejected","note":"Donor changed the pickup window"}'
 ```
 
-Malformed prompt envelopes return an error instead of silently triggering a live scan.
+Missing actions and malformed prompt envelopes return an error instead of silently triggering a live scan.
 
 ## Production boundary
 
@@ -66,7 +68,7 @@ Before enabling real traffic or a background schedule:
 
 1. Replace fixture intake with an authenticated, cursor-based inbox adapter.
 2. Replace runtime-local SQLite with a shared durable store and concurrency controls.
-3. Add idempotency keys derived from the source message identifier.
+3. Map the connector's stable source-message identifier to the implemented `event_id` idempotency key.
 4. Route failures to an operator alarm and a dead-letter path.
 5. Keep outbound delivery in a separate, approval-gated component.
 

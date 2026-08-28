@@ -4,11 +4,11 @@
 
 “A food-bank coordinator’s inbox is full of expiring offers. Every message triggers the same scramble: interpret the food, check which pantry needs it, verify storage and hours, split the load, then chase approval. RescueRelay gives that time back before the food loses shelf life.”
 
-Show the empty rescue desk. Point out **labeled demo data** and the honest **Background schedule off** status.
+Show the empty rescue desk. Point out **labeled demo data** and the **Event intake armed** status.
 
 ## 0:35–1:25 — The complete agent loop
 
-Select **Run inbox scan**. The replay uses a deterministic model adapter but executes the real Strands Agent and all four tools.
+Select **Simulate offer arrival**. FastAPI durably claims the event ID, returns an asynchronous receipt, and executes the real Strands Agent and all four tools through a deterministic model adapter. Point out the **event completed** receipt: retrying that ID cannot rerun the agent.
 
 Click each timeline step:
 
@@ -31,7 +31,7 @@ Show the pickup table, Today/Tomorrow windows, confidence/state columns, and the
 
 Show both actions in the decision rail. Approve the split first; the pickup remains awaiting approval. Approve the pickup commitment; the Harbor row changes to scheduled. Then explain the alternate path: declining either decision atomically declines the dispatch and closes its sibling decision.
 
-“In production, an inbox event or schedule invokes this run. The local replay stays manual and says so. Once invoked, the agent surfaces only when judgment or a real-world commitment is required. That boundary lives in application state, not a prompt.”
+“The local button simulates the inbox event; the agent run itself is background work. A production event source invokes the same idempotent action through the AWS-IAM-protected AgentCore runtime. Once invoked, RescueRelay surfaces only when judgment or a real-world commitment is required. That boundary lives in application state, not a prompt.”
 
 ## 3:15–3:55 — Technical implementation
 

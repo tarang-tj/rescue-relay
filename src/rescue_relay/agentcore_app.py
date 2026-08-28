@@ -1,11 +1,13 @@
 """Amazon Bedrock AgentCore Runtime entrypoint."""
 
 import json
+import re
 
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 
 from .agent import run_agent
 from .domain import DecisionState
+from .events import claim_offer_event, process_offer_event
 from .service import DispatchService
 from .store import StateStore
 
@@ -29,11 +31,44 @@ def invoke(payload: dict):
             return {"error": "prompt must be a JSON object encoded as text"}
         payload = decoded
 
-    action = payload.get("action", "scan")
+    action = payload.get("action")
+    if action is None:
+        return {"error": "action is required"}
     if action == "scan":
         mode = payload.get("mode", "live")
         summary = run_agent(service, mode=mode)
         return {"summary": summary, "dashboard": service.store.get().model_dump(mode="json")}
+    if action == "event":
+        event_id = payload.get("event_id")
+        if (
+            not isinstance(event_id, str)
+            or not (8 <= len(event_id) <= 128)
+            or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]+", event_id) is None
+        ):
+            return {"error": "event_id must be 8-128 URL-safe identifier characters"}
+        mode = payload.get("mode", "live")
+        if mode not in {"demo", "live"}:
+            return {"error": "mode must be demo or live"}
+        event, accepted = claim_offer_event(
+            service.store,
+            event_id=event_id,
+            source=str(payload.get("source", "agentcore_runtime"))[:64],
+            mode=mode,
+        )
+        if accepted:
+            event = process_offer_event(
+                service.store,
+                service,
+                event_id=event.id,
+                mode=mode,
+                runner=run_agent,
+            )
+        return {
+            "accepted": accepted,
+            "duplicate": not accepted,
+            "event": event.model_dump(mode="json"),
+            "dashboard": service.store.get().model_dump(mode="json"),
+        }
     if action == "dashboard":
         return service.store.get().model_dump(mode="json")
     if action in {"approve", "resolve"}:
