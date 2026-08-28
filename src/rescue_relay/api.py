@@ -11,10 +11,10 @@ from typing import Literal
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .agent import run_agent
-from .domain import DecisionState, IntakeEvent
+from .domain import DecisionState, IntakeEvent, Offer, Pantry
 from .events import claim_offer_event, process_offer_event
 from .service import DispatchService
 from .store import StateStore
@@ -31,8 +31,20 @@ class ResolutionRequest(BaseModel):
 
 class OfferEventRequest(BaseModel):
     event_id: str = Field(min_length=8, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]+$")
-    source: str = Field(default="demo_inbox", min_length=3, max_length=64)
+    source: str = Field(
+        default="demo_inbox", min_length=3, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]+$"
+    )
     mode: Literal["demo", "live"] = "demo"
+    offers: list[Offer] | None = Field(default=None, min_length=1, max_length=50)
+    partners: list[Pantry] | None = Field(default=None, min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def validate_event_inputs(self):
+        if (self.offers is None) != (self.partners is None):
+            raise ValueError("offers and partners must be supplied together")
+        if self.mode == "live" and self.offers is None:
+            raise ValueError("live events require normalized offers and partner snapshots")
+        return self
 
 
 class OfferEventResponse(BaseModel):
@@ -99,17 +111,23 @@ def create_app(database_path: str | Path | None = None) -> FastAPI:
             if not compare_digest(supplied, expected):
                 raise HTTPException(status_code=401, detail="Invalid event authorization")
 
-        event, accepted = claim_offer_event(
+        event, accepted, payload_matches = claim_offer_event(
             store,
             event_id=request.event_id,
             source=request.source,
             mode=request.mode,
+            offers=request.offers,
+            partners=request.partners,
         )
+        if not payload_matches:
+            raise HTTPException(
+                status_code=409,
+                detail="Event ID was already used for a different normalized payload",
+            )
         if accepted:
             background_tasks.add_task(
                 process_offer_event,
                 store,
-                service,
                 event_id=event.id,
                 mode=request.mode,
                 runner=run_agent,
@@ -151,6 +169,8 @@ def create_app(database_path: str | Path | None = None) -> FastAPI:
                 "commitments_require_persisted_approval": True,
                 "demo_data_labeled": True,
                 "offer_events_are_idempotent": True,
+                "event_receipts_expose_raw_payload": False,
+                "conflicting_event_payloads_are_rejected": True,
             },
             "dashboard": store.get(),
         }

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class FoodCategory(StrEnum):
@@ -37,27 +37,41 @@ class IntakeEventStatus(StrEnum):
 
 
 class Offer(BaseModel):
-    id: str
-    donor: str
+    id: str = Field(min_length=3, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]+$")
+    donor: str = Field(min_length=1, max_length=200)
     category: FoodCategory
-    pounds: int = Field(gt=0)
-    description: str
+    pounds: int = Field(gt=0, le=100_000)
+    description: str = Field(min_length=1, max_length=500)
     pickup_date: date
-    pickup_start: str
-    pickup_end: str
+    pickup_start: str = Field(pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
+    pickup_end: str = Field(pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     requires_confirmation: bool = False
-    source_text: str
+    source_text: str = Field(min_length=1, max_length=5_000)
     received_at: datetime
+
+    @model_validator(mode="after")
+    def validate_pickup_window(self):
+        if self.pickup_start >= self.pickup_end:
+            raise ValueError("pickup_start must be before pickup_end")
+        return self
 
 
 class Pantry(BaseModel):
-    id: str
-    name: str
+    id: str = Field(min_length=3, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]+$")
+    name: str = Field(min_length=1, max_length=200)
     needs: dict[FoodCategory, int]
     capacity: dict[FoodCategory, int]
-    distance_miles: float = Field(ge=0)
-    available_start: str
-    available_end: str
+    distance_miles: float = Field(ge=0, le=10_000)
+    available_start: str = Field(pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
+    available_end: str = Field(pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
+
+    @model_validator(mode="after")
+    def validate_constraints(self):
+        if self.available_start >= self.available_end:
+            raise ValueError("available_start must be before available_end")
+        if any(value < 0 or value > 100_000 for value in (*self.needs.values(), *self.capacity.values())):
+            raise ValueError("needs and capacity values must be between 0 and 100000")
+        return self
 
 
 class Allocation(BaseModel):
@@ -146,6 +160,26 @@ class IntakeEvent(BaseModel):
     completed_at: datetime | None = None
     run_id: str | None = None
     error: str | None = None
+    payload_sha256: str = ""
+    offer_count: int = 0
+    partner_count: int = 0
+
+
+class EventPayload(BaseModel):
+    """Validated normalized inputs stored internally for durable event processing."""
+
+    offers: list[Offer] = Field(min_length=1, max_length=50)
+    partners: list[Pantry] = Field(min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def validate_unique_ids(self):
+        offer_ids = [item.id for item in self.offers]
+        partner_ids = [item.id for item in self.partners]
+        if len(offer_ids) != len(set(offer_ids)):
+            raise ValueError("offer IDs must be unique within an event")
+        if len(partner_ids) != len(set(partner_ids)):
+            raise ValueError("partner IDs must be unique within an event")
+        return self
 
 
 class Impact(BaseModel):

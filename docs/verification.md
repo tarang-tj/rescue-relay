@@ -6,8 +6,8 @@ Last full local run: **2026-08-28**, using `./scripts/verify.sh` on macOS with P
 |---|---|---|
 | Locked Python environment | Pass | 65 packages resolved from `uv.lock` |
 | Ruff | Pass | All Python source, tests, and eval runner |
-| Pytest | **29 passed** | Agent loop, idempotent offer events, authenticated live intake, AgentCore actions and current CLI envelope, API, CLI, matcher, state transitions, persistence, failure paths, and safety hook |
-| Python coverage | **98.2% total** | Event orchestrator and API 100%, AgentCore entrypoint 98%, CLI 100%, service 99%; enforced floor 95% |
+| Pytest | **38 passed** | Agent loop, custom event inputs, payload restart persistence, same-runtime serialization, cross-store and bounded-receipt deduplication, collision rejection, authenticated live intake, AgentCore actions and current CLI envelope, API, CLI, matcher, state transitions, failure paths, domain validation, and safety hook |
+| Python coverage | **97.9% total** | Domain, event orchestrator, API, agent assembly, and CLI 100%; AgentCore entrypoint 98%; service 99%; enforced floor 95% |
 | AgentCore deployment bootstrap | Pass | Pinned `@aws/agentcore` 0.28.1 generated and schema-validated a Python 3.12, AWS-IAM-authorized BYO runtime project |
 | Deterministic evals | **5/5 passed** | Full allocation, ambiguous split, evidence grounding, Tomorrow date, partial remainder |
 | Python distribution | Pass | Source archive and wheel built; wheel separately installed and smoke-tested in an isolated virtual environment |

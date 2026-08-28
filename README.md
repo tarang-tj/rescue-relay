@@ -8,7 +8,7 @@
 
 Food-bank coordinators spend critical hours reading donor messages, checking pantry constraints, splitting loads, and chasing approvals while fresh food loses shelf life. RescueRelay handles that coordination loop end to end. It reads offers, applies deterministic capacity and timing rules, proposes a dispatch plan, and stages the outreach. A human is interrupted only when a real commitment or ambiguous split needs approval.
 
-An offer-arrival event starts that work in the background. Every event is durably claimed by ID before execution, so retries are safe and cannot create duplicate agent runs. Failures remain visible instead of being acknowledged as success; live HTTP events also fail closed unless an event token is configured.
+An offer-arrival event starts that work in the background. RescueRelay validates and durably persists the event's normalized offers and partner snapshot before execution. Every event is claimed by both ID and payload digest, so exact retries are safe while an ID reused with different content is rejected. Failures remain visible instead of being acknowledged as success; live HTTP events also fail closed unless an event token is configured.
 
 Built for the **Good Neighbor Agents** track of AWS's Agents for Humans Hackathon.
 
@@ -34,7 +34,7 @@ The model cannot send messages or silently commit a pickup. A structural `Before
 - **Portable audit:** download a machine-readable evidence bundle for the run, safeguards, and decisions.
 - **Impact ledger:** pounds rescued, estimated meals, and coordinator time saved are derived from completed allocations.
 - **Fail-loud execution:** errors become visible failed runs; they never masquerade as successful autonomy.
-- **Quiet event intake:** durable receipts track received, processing, completed, or failed events; duplicate IDs are no-ops.
+- **Quiet event intake:** durable receipts and normalized inputs survive restarts; exact retries are no-ops, conflicting retries fail closed, and one runtime serializes bursts instead of overlapping agent runs.
 
 ## Architecture
 
@@ -42,14 +42,14 @@ The model cannot send messages or silently commit a pickup. A structural `Before
 
 ```mermaid
 flowchart LR
-    EVENT[Inbox event] -->|idempotent claim| API[FastAPI service]
+    EVENT[Normalized offer + partner snapshot] -->|ID + payload claim| API[FastAPI service]
     UI[React rescue desk] -->|REST| API[FastAPI service]
     API --> ORCH[Strands Agent]
     ORCH -->|tool calls| INBOX[Offer intake]
     ORCH -->|tool calls| RULES[Pantry constraints]
     ORCH -->|tool calls| MATCH[Deterministic matcher]
     ORCH -->|tool calls| STAGE[Message staging]
-    INBOX --> DB[(SQLite run ledger)]
+    INBOX --> DB[(Private event payload + run ledger)]
     RULES --> DB
     MATCH --> DB
     STAGE --> DB
@@ -78,6 +78,16 @@ npm run dev
 ```
 
 Open `http://localhost:5173`, then select **Simulate offer arrival**. The event-driven replay is explicitly labeled and contains four local donor offers totaling 412 lb.
+
+To prove that intake is not hard-wired to those fixtures, post the checked-in normalized sample while the API is running:
+
+```bash
+curl --fail-with-body -X POST http://localhost:8000/api/events/offers \
+  -H 'Content-Type: application/json' \
+  --data @examples/offer-event.json
+```
+
+That event drives the same Strands tools with its own 36 lb offer and partner snapshot. The event response exposes only a receipt and SHA-256 payload fingerprint rather than echoing the raw payload; source evidence remains visible to the coordinator in the dashboard. A live request uses the same schema, requires `mode: "live"`, a configured `RESCUERELAY_EVENT_TOKEN`, and a bearer token.
 
 ### Container
 
@@ -115,10 +125,10 @@ No credentials are stored by the project. Live execution requires access to the 
 `src/rescue_relay/agentcore_app.py` exposes the agent through `BedrockAgentCoreApp`. Its direct Runtime payload accepts:
 
 ```json
-{"action": "event", "event_id": "ses-message-0001", "source": "ses", "mode": "live"}
+{"action": "event", "event_id": "judge-demo-0001", "source": "demo_inbox", "mode": "demo"}
 ```
 
-The `event` action is idempotent: replaying the same source event returns its durable receipt without rerunning the agent. The runtime also supports `scan`, `dashboard`, `approve`, and `resolve`. The current AgentCore CLI's text-wrapped JSON invocation format is accepted and tested as well. The runtime uses `/tmp/rescue-relay-agentcore.db`, keeping writes within AgentCore's writable runtime path. Run `./scripts/prepare-agentcore.sh` to generate a pinned, AWS-IAM-protected deployment project, and see `docs/agentcore.md` for the verified deployment workflow.
+Live events include validated `offers` and `partners` arrays in the same shape as `examples/offer-event.json`. The `event` action is content-safe idempotent: replaying the same source ID and payload returns its durable receipt without rerunning the agent, while changing content under that ID returns a conflict. The runtime also supports `scan`, `dashboard`, `approve`, and `resolve`. The current AgentCore CLI's text-wrapped JSON invocation format is accepted and tested as well. The runtime uses `/tmp/rescue-relay-agentcore.db`, keeping writes within AgentCore's writable runtime path. Run `./scripts/prepare-agentcore.sh` to generate a pinned, AWS-IAM-protected deployment project, and see `docs/agentcore.md` for the verified deployment workflow.
 
 ## Verification
 
@@ -144,7 +154,7 @@ cd frontend && npm run lint && npm run build && npm run test:e2e
 docker build -t rescue-relay .
 ```
 
-The suite covers matching invariants, capacity and date grounding, partial allocation, approval and rejection transitions, persisted drafts, audit export, run history, idempotent background events, authenticated live intake, the real Strands tool loop, REST behavior, fail-closed tool authorization, and desktop/mobile browser flows.
+The suite covers matching invariants, capacity and date grounding, partial allocation, approval and rejection transitions, persisted drafts, audit export, run history, custom event inputs, restart persistence, bounded-receipt deduplication, conflicting retries, authenticated live intake, the real Strands tool loop, REST behavior, fail-closed tool authorization, and desktop/mobile browser flows.
 
 ## Repository map
 
@@ -154,6 +164,7 @@ frontend/           React/Vite product interface
 tests/              unit, integration, and agent-loop tests
 docs/               architecture, deployment, pitch, and demo materials
 evals/              reproducible evaluation cases and runner
+examples/           executable normalized event payload
 ```
 
 See the [requirements and judging matrix](docs/requirements-matrix.md) for direct evidence links and the [pilot plan](docs/pilot-plan.md) for how the impact hypothesis would be validated with a real food-rescue network.
@@ -166,7 +177,7 @@ The dated [verification record](docs/verification.md) distinguishes locally prov
 - Outbound communication is staged; no send capability exists.
 - Commitments require persisted human approval.
 - Demo data and replay mode are visibly labeled; neither is presented as live production evidence.
-- The local demo uses a simulated inbox event and durable background receipt; it is not presented as a connected production inbox.
+- The local demo uses a simulated inbox event and durable background receipt; the checked-in custom event proves the payload adapter but is not presented as a connected production inbox.
 - Live HTTP event intake requires `RESCUERELAY_EVENT_TOKEN`; the AgentCore deployment path uses AWS IAM authorization.
 
 ## License

@@ -6,7 +6,17 @@ from datetime import UTC, datetime
 from hashlib import sha256
 from time import perf_counter
 
-from .domain import AgentRun, Decision, DecisionState, Evidence, Impact, MessageDraft, RunStep
+from .domain import (
+    AgentRun,
+    Decision,
+    DecisionState,
+    Evidence,
+    Impact,
+    MessageDraft,
+    Offer,
+    Pantry,
+    RunStep,
+)
 from .fixtures import demo_offers, demo_pantries
 from .matching import match_offers
 from .store import StateStore
@@ -17,11 +27,18 @@ def _id(prefix: str, value: str) -> str:
 
 
 class DispatchService:
-    def __init__(self, store: StateStore, *, source_label: str = "labeled_demo_fixture") -> None:
+    def __init__(
+        self,
+        store: StateStore,
+        *,
+        offers: list[Offer] | None = None,
+        pantries: list[Pantry] | None = None,
+        source_label: str = "labeled demo fixture",
+    ) -> None:
         self.store = store
         self.source_label = source_label
-        self._offers = demo_offers()
-        self._pantries = demo_pantries()
+        self._offers = offers if offers is not None else demo_offers()
+        self._pantries = pantries if pantries is not None else demo_pantries()
 
     def begin_run(self, mode: str, model_id: str) -> AgentRun:
         now = datetime.now(UTC)
@@ -75,7 +92,9 @@ class DispatchService:
         self._record_step(
             tool="read_donation_inbox",
             label=f"Read {len(self._offers)} offers",
-            detail=f"Normalized {pounds} lb from the demo inbox without executing message content.",
+            detail=(
+                f"Normalized {pounds} lb from {self.source_label} without executing message content."
+            ),
             started=started,
             evidence_ids=[item.id for item in evidence],
         )

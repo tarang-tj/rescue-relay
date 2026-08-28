@@ -10,6 +10,7 @@ flowchart TB
     subgraph Service[Application service]
       API[FastAPI]
       EVENTS[Idempotent event receipts]
+      PAYLOAD[(Internal normalized payloads)]
       LEDGER[(SQLite evidence + run ledger)]
       APPROVE[Approval state machine]
     end
@@ -29,13 +30,13 @@ flowchart TB
     end
 
     UI -->|simulated offer event| API
-    API --> EVENTS --> MODEL
+    API --> EVENTS --> PAYLOAD --> MODEL
     MODEL --> GUARD --> TOOLS
     TOOLS --> MATCH
     TOOLS --> LEDGER
     LEDGER --> UI
     DECIDE --> API --> APPROVE --> LEDGER
-    SOURCE -->|stable event ID| CORE --> EVENTS
+    SOURCE -->|stable ID + normalized inputs| CORE --> EVENTS
     MODEL -. live mode .-> BEDROCK
     CORE -. telemetry .-> OBS
 ```
@@ -48,16 +49,17 @@ flowchart TB
 4. The agent has no outbound send tool.
 5. The decision state machine is the only path from `awaiting_approval` to `scheduled`; rejection moves the dispatch to `declined` and rejects sibling decisions atomically.
 6. Message drafts and audit bundles are durable records, but neither creates an external side effect.
-7. An offer event is atomically claimed before execution. A duplicate event ID returns the original receipt and cannot rerun the agent.
+7. An offer event's validated offers and partner snapshot are atomically persisted with its receipt before execution. An exact duplicate returns the original receipt and cannot rerun the agent; reusing the ID for different content is rejected by payload digest.
 8. Live HTTP events require a configured bearer token; the AgentCore runtime is configured for AWS IAM authorization.
+9. Accepted events are serialized within one runtime, preventing overlapping mutations; a multi-instance deployment still requires the shared-store concurrency control described below.
 
 ## Runtime modes
 
 | Mode | Model adapter | Purpose | Claim boundary |
 |---|---|---|---|
-| `demo` | `ScriptedToolModel` implementing Strands `Model` | Repeatable judge demo | Labeled local fixture; no AWS model claim |
-| `live` | Strands `BedrockModel` | Production reasoning | Requires AWS credentials and model access |
+| `demo` | `ScriptedToolModel` implementing Strands `Model` | Repeatable judge demo or custom-payload adapter test | Labeled fixture or caller-supplied normalized inputs; no AWS model claim |
+| `live` | Strands `BedrockModel` | Production reasoning | Requires validated offers and partner snapshot, AWS credentials, and model access |
 
 Both modes execute the same Strands `Agent`, tools, hook, matcher, persistence layer, and frontend.
 
-The local product demonstrates asynchronous ingestion with a labeled simulated inbox event. FastAPI persists a receipt, returns `202 Accepted`, and executes the Strands run as a background task; the UI polls the receipt and surfaces the result only when complete or failed. AgentCore exposes the same idempotent `event` action for an AWS event source. Connecting a real cursor-based inbox and replacing runtime-local SQLite with a shared store remain production integration work and are not claimed by the demo.
+The local product demonstrates asynchronous ingestion with a labeled simulated inbox event. FastAPI validates and durably persists normalized inputs and a receipt, returns `202 Accepted`, and executes the Strands run as a background task; the UI polls the receipt and surfaces the result only when complete or failed. The executable payload in `examples/offer-event.json` proves the tools consume caller-supplied data rather than only fixtures. AgentCore exposes the same content-safe idempotent `event` action for an AWS event source. Connecting an authenticated source transformer and replacing runtime-local SQLite with a shared store remain production integration work and are not claimed by the demo.

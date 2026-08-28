@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import rescue_relay.agentcore_app as agentcore
+from rescue_relay.fixtures import demo_offers, demo_pantries
 from rescue_relay.service import DispatchService
 from rescue_relay.store import StateStore
 
@@ -9,6 +10,15 @@ def _isolated_service(monkeypatch, tmp_path) -> DispatchService:
     service = DispatchService(StateStore(tmp_path / "agentcore.db"))
     monkeypatch.setattr(agentcore, "service", service)
     return service
+
+
+def _event_inputs(*, pounds: int = 48) -> dict:
+    offer = demo_offers()[1].model_copy(update={"pounds": pounds})
+    pantry = next(item for item in demo_pantries() if item.id == "pantry-riverside")
+    return {
+        "offers": [offer.model_dump(mode="json")],
+        "partners": [pantry.model_dump(mode="json")],
+    }
 
 
 def test_agentcore_scan_dashboard_and_approval(monkeypatch, tmp_path):
@@ -115,5 +125,35 @@ def test_agentcore_event_is_durable_and_idempotent(monkeypatch, tmp_path):
     assert agentcore.invoke(
         {"action": "event", "event_id": "ses-message-0002", "mode": "pretend"}
     ) == {"error": "mode must be demo or live"}
+    assert "invalid event payload" in agentcore.invoke(
+        {"action": "event", "event_id": "ses-message-0003", "mode": "live"}
+    )["error"]
+    assert agentcore.invoke(
+        {"action": "event", "event_id": "ses-message-0004", "source": "bad source"}
+    ) == {"error": "source must be 3-64 URL-safe identifier characters"}
     assert agentcore.invoke({}) == {"error": "action is required"}
+    service.store.close()
+
+
+def test_agentcore_event_uses_custom_inputs_and_rejects_id_collision(monkeypatch, tmp_path):
+    service = _isolated_service(monkeypatch, tmp_path)
+    payload = {
+        "action": "event",
+        "event_id": "custom-event-0001",
+        "source": "eventbridge",
+        "mode": "demo",
+        **_event_inputs(pounds=28),
+    }
+
+    first = agentcore.invoke(payload)
+
+    assert first["accepted"] is True
+    assert first["event"]["offer_count"] == 1
+    assert first["event"]["partner_count"] == 1
+    assert first["dashboard"]["impact"]["pounds_matched"] == 28
+    assert first["dashboard"]["dispatches"][0]["donor"] == "Sunny Bakes"
+
+    conflict = agentcore.invoke({**payload, **_event_inputs(pounds=29)})
+    assert conflict == {"error": "event ID was already used for a different normalized payload"}
+    assert service.store.get().impact.pounds_matched == 28
     service.store.close()

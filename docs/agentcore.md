@@ -42,13 +42,13 @@ The current AgentCore CLI wraps its argument under `prompt`. RescueRelay accepts
 
 ```bash
 npx --yes @aws/agentcore@0.28.1 invoke --runtime RescueRelay \
-  --prompt '{"action":"event","event_id":"ses-message-0001","source":"ses","mode":"live"}'
+  --prompt '{"action":"event","event_id":"judge-demo-0001","source":"demo_inbox","mode":"demo"}'
 
 npx --yes @aws/agentcore@0.28.1 invoke --runtime RescueRelay \
   --prompt '{"action":"dashboard"}'
 ```
 
-The source integration must derive `event_id` from a stable source-message identifier. Replaying the same ID returns `duplicate: true` and the original receipt without starting another agent run. The lower-level `{"action":"scan","mode":"live"}` action remains available for an operator-initiated diagnostic run.
+For live traffic, the event object must also include non-empty `offers` and `partners` arrays using the contract in `examples/offer-event.json`. The source integration must derive `event_id` from a stable source-message identifier. RescueRelay durably persists the normalized inputs before execution and records their SHA-256 fingerprint on the receipt. Replaying the same ID and content returns `duplicate: true` without another run; changing the source, mode, offers, or partners under that ID fails with a collision error. The lower-level `{"action":"scan","mode":"live"}` action remains available only for an operator-initiated model diagnostic.
 
 Approval and explicit resolution use the same form:
 
@@ -66,9 +66,9 @@ Missing actions and malformed prompt envelopes return an error instead of silent
 
 Before enabling real traffic or a background schedule:
 
-1. Replace fixture intake with an authenticated, cursor-based inbox adapter.
+1. Connect an authenticated inbox transformer that maps source records into the validated event schema.
 2. Replace runtime-local SQLite with a shared durable store and concurrency controls.
-3. Map the connector's stable source-message identifier to the implemented `event_id` idempotency key.
+3. Map the connector's stable source-message identifier to `event_id` and provide a current partner snapshot.
 4. Route failures to an operator alarm and a dead-letter path.
 5. Keep outbound delivery in a separate, approval-gated component.
 

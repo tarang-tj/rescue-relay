@@ -12,8 +12,9 @@
 - [ ] Optional: publish `docs/builder-post.md` on builder.aws.com with “Agents for Humans” in the title.
 - [x] Run the full verification suite locally and on a clean GitHub-hosted runner.
 - [x] Build the Docker image on a clean Docker-enabled GitHub-hosted runner.
+- [x] Validate the checked-in custom offer payload and prove it drives the Strands tools instead of fixtures.
 - [ ] Launch the Docker image in the final hosting environment, if a live demo is deployed.
-- [ ] Replace screenshots with final build and verify no private data or credentials are visible.
+- [x] Replace screenshots with the final build and verify no private data or credentials are visible.
 - [ ] Download and inspect the JSON audit bundle during the recorded demo.
-- [ ] Cross-check every Devpost claim against `docs/requirements-matrix.md`.
+- [x] Cross-check every Devpost claim against `docs/requirements-matrix.md`.
 - [ ] If deployed, verify the live URL, authenticated trigger, durable store, alarms, and explicit **live** labeling.

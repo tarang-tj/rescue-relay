@@ -5,6 +5,7 @@ from __future__ import annotations
 import sqlite3
 import threading
 from collections.abc import Callable
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,7 @@ from .domain import (
     Dashboard,
     DecisionState,
     DispatchState,
+    EventPayload,
     Evidence,
     Impact,
     IntakeEvent,
@@ -39,29 +41,43 @@ class StateStore:
         self.path = str(path)
         Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.RLock()
+        self._run_lock = threading.Lock()
         self._connection = sqlite3.connect(self.path, check_same_thread=False)
         self._connection.execute("PRAGMA journal_mode=WAL")
         self._connection.execute(
             "CREATE TABLE IF NOT EXISTS app_state "
             "(id INTEGER PRIMARY KEY CHECK (id = 1), payload TEXT NOT NULL)"
         )
+        self._connection.execute(
+            "CREATE TABLE IF NOT EXISTS intake_payloads "
+            "(event_id TEXT PRIMARY KEY, payload_sha256 TEXT NOT NULL, "
+            "payload TEXT NOT NULL, event TEXT NOT NULL)"
+        )
         self._connection.commit()
         if self._connection.execute("SELECT COUNT(*) FROM app_state").fetchone()[0] == 0:
             self._write(empty_dashboard())
 
-    def _write(self, dashboard: Dashboard) -> None:
+    def _write(self, dashboard: Dashboard, *, commit: bool = True) -> None:
         payload = dashboard.model_dump_json()
         self._connection.execute(
             "INSERT INTO app_state(id, payload) VALUES(1, ?) "
             "ON CONFLICT(id) DO UPDATE SET payload = excluded.payload",
             (payload,),
         )
-        self._connection.commit()
+        if commit:
+            self._connection.commit()
 
     def get(self) -> Dashboard:
         with self._lock:
             row = self._connection.execute("SELECT payload FROM app_state WHERE id = 1").fetchone()
             return Dashboard.model_validate_json(row[0])
+
+    @contextmanager
+    def agent_run_slot(self):
+        """Serialize agent runs that share this store while leaving event receipt reads available."""
+
+        with self._run_lock:
+            yield
 
     def update(self, mutate: Callable[[Dashboard], Any]) -> Dashboard:
         with self._lock:
@@ -73,6 +89,7 @@ class StateStore:
     def reset(self) -> Dashboard:
         with self._lock:
             dashboard = empty_dashboard()
+            self._connection.execute("DELETE FROM intake_payloads")
             self._write(dashboard)
             return dashboard
 
@@ -103,22 +120,50 @@ class StateStore:
 
         return self.update(mutate)
 
-    def claim_event(self, event: IntakeEvent) -> tuple[IntakeEvent, bool]:
-        """Persist an event exactly once and report whether this caller owns processing it."""
+    def claim_event(
+        self, event: IntakeEvent, payload: EventPayload
+    ) -> tuple[IntakeEvent, bool, bool]:
+        """Atomically persist an event payload and report ownership and payload consistency."""
 
-        accepted = False
+        with self._lock:
+            try:
+                inserted = self._connection.execute(
+                    "INSERT INTO intake_payloads(event_id, payload_sha256, payload, event) "
+                    "VALUES(?, ?, ?, ?) "
+                    "ON CONFLICT(event_id) DO NOTHING",
+                    (
+                        event.id,
+                        event.payload_sha256,
+                        payload.model_dump_json(),
+                        event.model_dump_json(),
+                    ),
+                ).rowcount
+                if inserted:
+                    dashboard = self.get()
+                    dashboard.intake_events.insert(0, event)
+                    dashboard.intake_events = dashboard.intake_events[:25]
+                    self._write(dashboard)
+                    return event, True, True
 
-        def mutate(dashboard: Dashboard) -> None:
-            nonlocal accepted
-            if any(item.id == event.id for item in dashboard.intake_events):
-                return
-            dashboard.intake_events.insert(0, event)
-            dashboard.intake_events = dashboard.intake_events[:25]
-            accepted = True
+                row = self._connection.execute(
+                    "SELECT payload_sha256, event FROM intake_payloads WHERE event_id = ?", (event.id,)
+                ).fetchone()
+                if row is None:
+                    raise RuntimeError(f"event claim disappeared before lookup: {event.id}")
+                persisted = IntakeEvent.model_validate_json(row[1])
+                return persisted, False, row[0] == event.payload_sha256
+            except Exception:
+                self._connection.rollback()
+                raise
 
-        dashboard = self.update(mutate)
-        persisted = next(item for item in dashboard.intake_events if item.id == event.id)
-        return persisted, accepted
+    def load_event_payload(self, event_id: str) -> EventPayload:
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT payload FROM intake_payloads WHERE event_id = ?", (event_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(event_id)
+            return EventPayload.model_validate_json(row[0])
 
     def update_event(
         self,
@@ -129,23 +174,41 @@ class StateStore:
         run_id: str | None = None,
         error: str | None = None,
     ) -> IntakeEvent:
-        def mutate(dashboard: Dashboard) -> None:
-            event = next((item for item in dashboard.intake_events if item.id == event_id), None)
-            if event is None:
-                raise KeyError(event_id)
-            event.status = status
-            event.completed_at = completed_at
-            event.run_id = run_id
-            event.error = error
-
-        dashboard = self.update(mutate)
-        return next(item for item in dashboard.intake_events if item.id == event_id)
+        with self._lock:
+            try:
+                event = self.get_event(event_id)
+                event.status = status
+                event.completed_at = completed_at
+                event.run_id = run_id
+                event.error = error
+                dashboard = self.get()
+                visible = next(
+                    (item for item in dashboard.intake_events if item.id == event_id), None
+                )
+                if visible is not None:
+                    visible.status = status
+                    visible.completed_at = completed_at
+                    visible.run_id = run_id
+                    visible.error = error
+                self._write(dashboard, commit=False)
+                self._connection.execute(
+                    "UPDATE intake_payloads SET event = ? WHERE event_id = ?",
+                    (event.model_dump_json(), event_id),
+                )
+                self._connection.commit()
+                return event
+            except Exception:
+                self._connection.rollback()
+                raise
 
     def get_event(self, event_id: str) -> IntakeEvent:
-        event = next((item for item in self.get().intake_events if item.id == event_id), None)
-        if event is None:
-            raise KeyError(event_id)
-        return event
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT event FROM intake_payloads WHERE event_id = ?", (event_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(event_id)
+            return IntakeEvent.model_validate_json(row[0])
 
     def resolve_decision(
         self, decision_id: str, state: DecisionState, resolved_at: Any, note: str | None = None

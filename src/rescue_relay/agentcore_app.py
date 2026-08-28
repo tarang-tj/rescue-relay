@@ -49,16 +49,29 @@ def invoke(payload: dict):
         mode = payload.get("mode", "live")
         if mode not in {"demo", "live"}:
             return {"error": "mode must be demo or live"}
-        event, accepted = claim_offer_event(
-            service.store,
-            event_id=event_id,
-            source=str(payload.get("source", "agentcore_runtime"))[:64],
-            mode=mode,
-        )
+        source = payload.get("source", "agentcore_runtime")
+        if (
+            not isinstance(source, str)
+            or not (3 <= len(source) <= 64)
+            or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]+", source) is None
+        ):
+            return {"error": "source must be 3-64 URL-safe identifier characters"}
+        try:
+            event, accepted, payload_matches = claim_offer_event(
+                service.store,
+                event_id=event_id,
+                source=source,
+                mode=mode,
+                offers=payload.get("offers"),
+                partners=payload.get("partners"),
+            )
+        except ValueError as exc:
+            return {"error": f"invalid event payload: {exc}"}
+        if not payload_matches:
+            return {"error": "event ID was already used for a different normalized payload"}
         if accepted:
             event = process_offer_event(
                 service.store,
-                service,
                 event_id=event.id,
                 mode=mode,
                 runner=run_agent,

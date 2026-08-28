@@ -14,7 +14,7 @@ def test_demo_runs_real_strands_tool_loop_end_to_end(tmp_path):
     summary = run_agent(service, mode="demo")
     dashboard = store.get()
 
-    assert "two Harbor Market decisions require approval" in summary
+    assert "Review the persisted evidence" in summary
     assert dashboard.active_run is not None
     assert dashboard.active_run.status == "completed"
     assert [step.tool for step in dashboard.active_run.steps] == TOOL_ORDER

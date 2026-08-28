@@ -44,8 +44,8 @@ class ScriptedToolModel(Model):
             yield {"messageStop": {"stopReason": "tool_use"}}
         else:
             text = (
-                "Dispatch plan complete. Four messages are drafted; "
-                "two Harbor Market decisions require approval."
+                "Dispatch plan complete. Review the persisted evidence, message drafts, "
+                "and any approval decisions."
             )
             yield {"contentBlockStart": {"start": {}}}
             yield {"contentBlockDelta": {"delta": {"text": text}}}

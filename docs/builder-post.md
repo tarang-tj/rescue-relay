@@ -20,7 +20,7 @@ The agent can propose a two-pantry split, but the dispatch remains `awaiting_app
 
 The local demo uses a clearly labeled scripted model implementing the Strands model interface. It drives the actual tool loop and makes the demo reproducible. A simulated offer-arrival event is atomically claimed before the asynchronous run begins; each receipt moves through received, processing, completed, or failed, and a repeated event ID cannot trigger duplicate work. Live HTTP intake requires an explicit bearer secret.
 
-Live mode swaps the replay adapter for Amazon Bedrock. The `BedrockAgentCoreApp` entrypoint exposes the same idempotent event action behind AWS IAM, providing the production deployment seam with AgentCore observability as the next operational layer. The demo proves event handling but does not pretend its local fixture is a connected inbox.
+Live mode swaps the replay adapter for Amazon Bedrock. The `BedrockAgentCoreApp` entrypoint exposes the same event action behind AWS IAM. Before execution, RescueRelay validates and durably persists the event's normalized offers and partner snapshot. Its receipt fingerprints the source, mode, and content, so exact retries are no-ops while same-ID content changes fail closed. The checked-in sample event proves caller-supplied inputs drive the tools, while the demo remains honest that no production inbox is connected yet.
 
 ## The larger lesson
 

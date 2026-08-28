@@ -14,7 +14,7 @@ Food rescue is a race against time, yet community coordinators lose hours to sma
 
 ## What it does
 
-RescueRelay turns a donation-inbox event into a complete coordination run. It atomically claims each event ID so retries cannot duplicate work, normalizes the offer, checks pantry needs and constraints, runs a deterministic allocator, and persists complete outreach drafts. Failures remain visible on durable receipts. The coordinator sees one evidence-backed workspace and is surfaced only for ambiguous allocations or real pickup commitments. The judge demo uses a labeled simulated event; AgentCore exposes the same idempotent action behind AWS IAM for a production event source.
+RescueRelay turns a normalized donation-inbox event into a complete coordination run. It validates and durably persists the offers and partner snapshot before execution, then claims both the event ID and content digest so exact retries cannot duplicate work and conflicting retries fail closed. The agent checks pantry needs and constraints, runs a deterministic allocator, and persists complete outreach drafts. Failures remain visible on durable receipts. The coordinator sees one evidence-backed workspace and is surfaced only for ambiguous allocations or real pickup commitments. The judge demo uses a labeled simulated event; an executable custom payload proves the tools are not hard-wired to fixtures; AgentCore exposes the same action behind AWS IAM for a production event source.
 
 The demo coordinates four offers totaling 412 lb across four community pantries, preserves Today/Tomorrow pickup dates, produces four persisted drafts, and surfaces two precise human decisions. Approval schedules the handoff; rejection safely declines it. It never pretends a draft was sent or a pickup was scheduled.
 
@@ -41,7 +41,7 @@ We also separated repeatability from model claims. The judge demo uses a labeled
 - Reproducible evals covering capacity, dates, grounding, partial allocation, and ambiguous splits
 - A responsive product UI tested end to end at desktop and mobile sizes
 - An AgentCore-ready runtime entrypoint with explicit approval and rejection actions
-- Durable, idempotent background event receipts shared by FastAPI and AgentCore
+- Durable event inputs and content-safe idempotent receipts shared by FastAPI and AgentCore
 
 ## What we learned
 
@@ -49,4 +49,4 @@ The most useful agent is not the one that talks the most. It is the one that qui
 
 ## What’s next
 
-Pilot with one food-bank network using the included measurement plan; replace fixture adapters with authenticated inbox and pantry integrations; validate meal and time-saved estimates against field data; move the ledger to a shared store; deploy the live model path on AgentCore with CloudWatch traces, alarms, and a dead-letter path.
+Pilot with one food-bank network using the included measurement plan; connect authenticated inbox and pantry source transformers to the validated event contract; validate meal and time-saved estimates against field data; move the ledger to a shared store; deploy the live model path on AgentCore with CloudWatch traces, alarms, and a dead-letter path.

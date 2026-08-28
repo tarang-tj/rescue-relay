@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">RescueRelay architecture</title>
-  <desc id="desc">An idempotent inbox event starts a FastAPI and Strands agent workflow. A guarded four-tool loop uses deterministic matching and an evidence ledger. Human approvals control commitments. Amazon Bedrock and AgentCore provide the production path.</desc>
+  <desc id="desc">A validated offer and partner event is durably persisted before starting a FastAPI and Strands agent workflow. A guarded four-tool loop uses deterministic matching and an evidence ledger. Human approvals control commitments. Amazon Bedrock and AgentCore provide the production path.</desc>
   <defs>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#173b31" flood-opacity=".08"/>
@@ -33,7 +33,7 @@
   <rect x="506" y="220" rx="14" width="630" height="470" fill="#fffefa" stroke="#d7dbd3" filter="url(#shadow)"/>
   <rect x="538" y="252" rx="10" width="566" height="72" fill="#173f32"/>
   <text x="566" y="284" font-family="Georgia" font-size="22" font-weight="600" fill="#fff">Event intake + Strands Agent</text>
-  <text x="566" y="307" font-family="Arial" font-size="14" fill="#bdd0c5">durable receipt · idempotent claim · background execution</text>
+  <text x="566" y="307" font-family="Arial" font-size="14" fill="#bdd0c5">durable payload · ID + content digest · background execution</text>
 
   <rect x="538" y="352" rx="10" width="178" height="104" fill="#edf3ed" stroke="#ccdbd0"/>
   <text x="560" y="384" class="mini">MODEL ADAPTER</text>
@@ -56,7 +56,7 @@
   <text x="1230" y="197" class="lane">EVIDENCE + EFFECTS</text>
   <rect x="1230" y="220" rx="14" width="280" height="210" fill="#fffefa" stroke="#d7dbd3" filter="url(#shadow)"/>
   <text x="1260" y="264" class="box-title">Run ledger</text>
-  <text x="1260" y="302" class="body">Event receipts + source records</text><text x="1260" y="331" class="body">Tool timings + failures</text>
+  <text x="1260" y="302" class="body">Durable inputs + source records</text><text x="1260" y="331" class="body">Receipts + tool failures</text>
   <text x="1260" y="360" class="body">Dispatch + impact state</text>
   <rect x="1260" y="384" rx="8" width="137" height="30" fill="#e6eee7"/>
   <text x="1277" y="404" class="mini">SQLITE / STORE</text>
@@ -75,7 +75,7 @@
 
   <rect x="90" y="752" rx="14" width="1420" height="90" fill="#eee9dc" stroke="#ddd4c4"/>
   <text x="122" y="787" class="lane">AWS PRODUCTION PATH</text>
-  <text x="122" y="820" class="body">Inbox event → IAM AgentCore Runtime</text>
+  <text x="122" y="820" class="body">Normalized event → IAM AgentCore</text>
   <path d="M438 811h91" class="line dash"/>
   <text x="559" y="820" class="body">Strands BedrockModel</text>
   <path d="M773 811h91" class="line dash"/>

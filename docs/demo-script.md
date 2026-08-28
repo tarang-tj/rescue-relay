@@ -10,6 +10,8 @@ Show the empty rescue desk. Point out **labeled demo data** and the **Event inta
 
 Select **Simulate offer arrival**. FastAPI durably claims the event ID, returns an asynchronous receipt, and executes the real Strands Agent and all four tools through a deterministic model adapter. Point out the **event completed** receipt: retrying that ID cannot rerun the agent.
 
+Briefly show `examples/offer-event.json`: “The replay button uses labeled fixtures for a stable video, but this checked-in executable payload proves the same tools consume caller-supplied offers and partner constraints. Inputs are validated and durably persisted before the receipt is acknowledged; an ID reused with different content is rejected.”
+
 Click each timeline step:
 
 1. Four donor offers become evidence records.
@@ -37,7 +39,7 @@ Show both actions in the decision rail. Approve the split first; the pickup rema
 
 Show the architecture diagram, then briefly show `agent.py`, `matching.py`, and `agentcore_app.py`.
 
-“The same workflow can swap the replay adapter for Amazon Bedrock and run through the included AgentCore entrypoint. AgentCore adds a production runtime and observability path without coupling the core logic to deployment.”
+“The same validated event contract reaches the included AgentCore entrypoint, where the workflow can swap the replay adapter for Amazon Bedrock. AgentCore adds a production runtime and observability path without coupling the core logic to deployment.”
 
 ## 3:55–4:30 — Impact and close
 

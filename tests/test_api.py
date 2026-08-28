@@ -1,7 +1,20 @@
+import json
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 import rescue_relay.api as api_module
 from rescue_relay.api import create_app
+from rescue_relay.fixtures import demo_offers, demo_pantries
+
+
+def _event_inputs(*, pounds: int = 48) -> dict:
+    offer = demo_offers()[1].model_copy(update={"pounds": pounds})
+    pantry = next(item for item in demo_pantries() if item.id == "pantry-riverside")
+    return {
+        "offers": [offer.model_dump(mode="json")],
+        "partners": [pantry.model_dump(mode="json")],
+    }
 
 
 def test_api_core_workflow(tmp_path):
@@ -25,6 +38,7 @@ def test_api_core_workflow(tmp_path):
     assert audit.status_code == 200
     assert audit.json()["schema_version"] == "1.0"
     assert audit.json()["safety_assertions"]["outbound_send_capability"] is False
+    assert audit.json()["safety_assertions"]["event_receipts_expose_raw_payload"] is False
 
 
 def test_decision_can_be_rejected_but_not_reversed(tmp_path):
@@ -94,6 +108,9 @@ def test_offer_event_runs_agent_in_background_and_deduplicates(tmp_path):
     assert event.status_code == 200
     assert event.json()["status"] == "completed"
     assert event.json()["run_id"] is not None
+    assert event.json()["offer_count"] == 4
+    assert event.json()["partner_count"] == 4
+    assert len(event.json()["payload_sha256"]) == 64
     first_run_id = event.json()["run_id"]
 
     duplicate = client.post("/api/events/offers", json=payload)
@@ -129,7 +146,12 @@ def test_offer_event_failure_is_visible_without_false_success(monkeypatch, tmp_p
 
 def test_live_offer_events_fail_closed_without_valid_authorization(monkeypatch, tmp_path):
     client = TestClient(create_app(tmp_path / "live-events.db"))
-    payload = {"event_id": "live-message-batch-001", "source": "ses", "mode": "live"}
+    payload = {
+        "event_id": "live-message-batch-001",
+        "source": "ses",
+        "mode": "live",
+        **_event_inputs(),
+    }
 
     assert client.post("/api/events/offers", json=payload).status_code == 503
 
@@ -146,8 +168,104 @@ def test_live_offer_events_fail_closed_without_valid_authorization(monkeypatch, 
     assert client.get("/api/events/live-message-batch-001").json()["status"] == "completed"
 
 
+def test_custom_event_payload_drives_tools_and_conflicting_retry_is_rejected(tmp_path):
+    client = TestClient(create_app(tmp_path / "custom-event.db"))
+    payload = {
+        "event_id": "webhook-offer-0001",
+        "source": "partner_webhook",
+        "mode": "demo",
+        **_event_inputs(pounds=30),
+    }
+
+    accepted = client.post("/api/events/offers", json=payload)
+
+    assert accepted.status_code == 202
+    receipt = client.get("/api/events/webhook-offer-0001").json()
+    assert receipt["status"] == "completed"
+    assert receipt["offer_count"] == 1
+    assert receipt["partner_count"] == 1
+    dashboard = client.get("/api/dashboard").json()
+    assert dashboard["impact"]["pounds_matched"] == 30
+    assert dashboard["dispatches"][0]["donor"] == "Sunny Bakes"
+    assert "four messages" not in dashboard["active_run"]["summary"].lower()
+    assert "event source 'partner_webhook'" in dashboard["active_run"]["steps"][0]["detail"]
+
+    conflicting = {**payload, **_event_inputs(pounds=31)}
+    response = client.post("/api/events/offers", json=conflicting)
+    assert response.status_code == 409
+    assert "different normalized payload" in response.json()["detail"]
+    assert client.get("/api/dashboard").json()["impact"]["pounds_matched"] == 30
+
+
+def test_checked_in_offer_event_example_is_executable(tmp_path):
+    client = TestClient(create_app(tmp_path / "example-event.db"))
+    example = json.loads(
+        (Path(__file__).parents[1] / "examples" / "offer-event.json").read_text()
+    )
+
+    response = client.post("/api/events/offers", json=example)
+
+    assert response.status_code == 202
+    assert response.json()["event"]["offer_count"] == 1
+    dashboard = client.get("/api/dashboard").json()
+    assert dashboard["impact"]["pounds_matched"] == 36
+    assert dashboard["dispatches"][0]["donor"] == "Sample Neighborhood Bakery"
+
+
+def test_event_payload_and_receipt_survive_store_restart(tmp_path):
+    database = tmp_path / "restart-event.db"
+    app = create_app(database)
+    client = TestClient(app)
+    payload = {
+        "event_id": "restart-event-0001",
+        "source": "partner_webhook",
+        "mode": "demo",
+        **_event_inputs(pounds=25),
+    }
+    assert client.post("/api/events/offers", json=payload).status_code == 202
+    run_id = client.get("/api/events/restart-event-0001").json()["run_id"]
+    app.state.store.close()
+
+    restarted = create_app(database)
+    restarted_client = TestClient(restarted)
+    duplicate = restarted_client.post("/api/events/offers", json=payload)
+
+    assert duplicate.status_code == 200
+    assert duplicate.json()["duplicate"] is True
+    assert duplicate.json()["event"]["run_id"] == run_id
+    persisted = restarted.state.store.load_event_payload("restart-event-0001")
+    assert persisted.offers[0].pounds == 25
+    assert persisted.partners[0].id == "pantry-riverside"
+
+
 def test_offer_event_contract_rejects_bad_ids_and_missing_events(tmp_path):
     client = TestClient(create_app(tmp_path / "event-contract.db"))
 
     assert client.post("/api/events/offers", json={"event_id": "bad id"}).status_code == 422
+    assert (
+        client.post(
+            "/api/events/offers",
+            json={
+                "event_id": "live-missing-inputs",
+                "source": "ses",
+                "mode": "live",
+            },
+        ).status_code
+        == 422
+    )
+    one_sided = {
+        "event_id": "one-sided-inputs",
+        "mode": "demo",
+        "offers": _event_inputs()["offers"],
+    }
+    assert client.post("/api/events/offers", json=one_sided).status_code == 422
+    invalid_window = _event_inputs()
+    invalid_window["offers"][0]["pickup_end"] = invalid_window["offers"][0]["pickup_start"]
+    assert (
+        client.post(
+            "/api/events/offers",
+            json={"event_id": "invalid-window-0001", "mode": "demo", **invalid_window},
+        ).status_code
+        == 422
+    )
     assert client.get("/api/events/missing-event").status_code == 404

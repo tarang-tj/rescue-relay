@@ -1,0 +1,35 @@
+{
+  "event_id": "sample-webhook-0001",
+  "source": "partner_webhook",
+  "mode": "demo",
+  "offers": [
+    {
+      "id": "offer-sample-bakery",
+      "donor": "Sample Neighborhood Bakery",
+      "category": "bakery",
+      "pounds": 36,
+      "description": "boxed bread and rolls",
+      "pickup_date": "2026-09-01",
+      "pickup_start": "15:00",
+      "pickup_end": "16:00",
+      "requires_confirmation": false,
+      "source_text": "We have 36 lb of boxed bread and rolls ready for pickup from 3 to 4 PM.",
+      "received_at": "2026-09-01T13:05:00Z"
+    }
+  ],
+  "partners": [
+    {
+      "id": "pantry-sample-riverside",
+      "name": "Sample Riverside Pantry",
+      "needs": {
+        "bakery": 60
+      },
+      "capacity": {
+        "bakery": 60
+      },
+      "distance_miles": 3.8,
+      "available_start": "13:00",
+      "available_end": "18:00"
+    }
+  ]
+}
