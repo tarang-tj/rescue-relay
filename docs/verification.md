@@ -18,8 +18,8 @@ Last full local run: **2026-08-28**, using `./scripts/verify.sh` on macOS with P
 | Browser flake check | Pass | Complete Playwright suite passed twice consecutively after per-process database isolation |
 | Production static serving | Pass | Compiled UI returned over FastAPI and `/api/health` returned HTTP 200 |
 | Secret/trailing-whitespace scan | Pass | No recognized credential patterns or trailing whitespace in tracked-source candidates |
-| Docker image | Awaiting Docker-enabled runner | Docker is unavailable locally; Dockerfile uses a non-root UID and health check, and CI includes a dedicated `docker build` job |
+| Docker image | **Pass in GitHub Actions** | A clean Ubuntu runner built the multi-stage image; the runtime uses non-root UID/GID 10001 and includes a health check |
 
 Two warnings originate in installed dependencies: AgentCore currently uses a Pydantic class-based config, and FastAPI's compatibility `TestClient` re-exports Starlette's deprecated httpx-backed client. Neither warning is emitted by RescueRelay source or causes a failed gate.
 
-This record is reproducible evidence, not a hosted-status claim. After the repository is published, the GitHub Actions test and container jobs should be linked from the submission as external clean-run proof.
+The public repository's [GitHub Actions workflow](https://github.com/tarang-tj/rescue-relay/actions/workflows/ci.yml) independently reproduces the test and container gates on clean Ubuntu runners. The workflow uses read-only repository permissions and immutable commit pins for third-party actions.

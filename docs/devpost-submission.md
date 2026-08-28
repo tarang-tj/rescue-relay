@@ -1,5 +1,9 @@
 # Devpost submission draft
 
+## Source code
+
+Public MIT-licensed repository: https://github.com/tarang-tj/rescue-relay
+
 ## Tagline
 
 RescueRelay turns messy surplus-food offers into safe, evidence-backed pantry pickups—and only interrupts a coordinator when human judgment is truly required.

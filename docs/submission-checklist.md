@@ -1,7 +1,7 @@
 # Submission checklist
 
-- [ ] Push this repository to a public GitHub URL.
-- [ ] Set the GitHub About section license to MIT.
+- [x] Push this repository to a public GitHub URL: https://github.com/tarang-tj/rescue-relay
+- [x] Confirm GitHub detects the root license as MIT in the About panel.
 - [ ] Add the public repository URL to Devpost.
 - [ ] Upload the ready `docs/architecture.png` diagram.
 - [ ] Record the working demo using `docs/demo-script.md` (maximum 5 minutes).
@@ -10,8 +10,9 @@
 - [ ] Optional: deploy the AgentCore entrypoint and add the live URL.
 - [ ] Before AgentCore deployment, run `scripts/prepare-agentcore.sh`, inspect the pinned CLI's `deploy --dry-run` output, and confirm AWS IAM authorization.
 - [ ] Optional: publish `docs/builder-post.md` on builder.aws.com with “Agents for Humans” in the title.
-- [ ] Run the full verification commands in the README from a clean clone.
-- [ ] Build and launch the Docker image on a Docker-enabled machine.
+- [x] Run the full verification suite locally and on a clean GitHub-hosted runner.
+- [x] Build the Docker image on a clean Docker-enabled GitHub-hosted runner.
+- [ ] Launch the Docker image in the final hosting environment, if a live demo is deployed.
 - [ ] Replace screenshots with final build and verify no private data or credentials are visible.
 - [ ] Download and inspect the JSON audit bundle during the recorded demo.
 - [ ] Cross-check every Devpost claim against `docs/requirements-matrix.md`.
