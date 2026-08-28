@@ -4,8 +4,9 @@
 - [x] Confirm GitHub detects the root license as MIT in the About panel.
 - [ ] Add the public repository URL to Devpost.
 - [ ] Upload the ready `docs/architecture.png` diagram.
-- [ ] Record the working demo using `docs/demo-script.md` (maximum 5 minutes).
-- [ ] Confirm the video covers problem, audience, and why it matters.
+- [x] Render and inspect the reproducible caption-led demo using `docs/demo-script.md` (2:40, below the 5-minute maximum).
+- [x] Confirm the rendered video covers problem, audience, why it matters, the working product, and technical implementation.
+- [ ] Optionally add narration, upload the final video, and add its public URL to Devpost.
 - [ ] Add AWS Builder ID to the submission.
 - [ ] Optional: deploy the AgentCore entrypoint and add the live URL.
 - [x] Generate, validate, package, and inspect the AWS-IAM-protected AgentCore project with the current stable CLI.
@@ -16,6 +17,6 @@
 - [x] Validate the checked-in custom offer payload and prove it drives the Strands tools instead of fixtures.
 - [ ] Launch the Docker image in the final hosting environment, if a live demo is deployed.
 - [x] Replace screenshots with the final build and verify no private data or credentials are visible.
-- [ ] Download and inspect the JSON audit bundle during the recorded demo.
+- [x] Download, parse, and validate the JSON audit bundle during the recorded demo.
 - [x] Cross-check every Devpost claim against `docs/requirements-matrix.md`.
 - [ ] If deployed, verify the live URL, authenticated trigger, durable store, alarms, and explicit **live** labeling.

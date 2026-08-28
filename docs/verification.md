@@ -17,6 +17,7 @@ Last full local run: **2026-08-28**, using `./scripts/verify.sh` on macOS with P
 | Production frontend build | Pass | TypeScript project build and Vite production bundle |
 | Browser tests | **2 passed, 2 intentionally skipped by project routing** | One desktop evidence/rejection/audit/reset flow and one emulated iPhone control/overflow flow |
 | Browser flake check | Pass | Complete Playwright suite passed twice consecutively after per-process database isolation |
+| Caption-led demo render | **Pass: 2:40** | Playwright drove the complete Strands workflow and approvals, parsed the downloaded audit bundle, and produced a 1600×900 H.264/yuv420p MP4 with an AAC compatibility track |
 | Production static serving | Pass | Compiled UI returned over FastAPI and `/api/health` returned HTTP 200 |
 | Secret/trailing-whitespace scan | Pass | No recognized credential patterns or trailing whitespace in tracked-source candidates |
 | Docker image | **Pass in GitHub Actions** | A clean Ubuntu runner built the multi-stage image; the runtime uses non-root UID/GID 10001 and includes a health check |

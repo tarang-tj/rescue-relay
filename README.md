@@ -157,6 +157,16 @@ docker build -t rescue-relay .
 
 The suite covers matching invariants, capacity and date grounding, partial allocation, approval and rejection transitions, persisted drafts, audit export, run history, custom event inputs, restart persistence, bounded-receipt deduplication, conflicting retries, authenticated live intake, the real Strands tool loop, REST behavior, fail-closed tool authorization, and desktop/mobile browser flows.
 
+## Demo capture
+
+Create the caption-led, upload-ready hackathon cut with one command (requires `ffmpeg` and `ffprobe`):
+
+```bash
+./scripts/record-demo.sh
+```
+
+The recorder starts isolated backend and frontend processes, drives the real Strands workflow, validates the downloaded audit bundle, records both approval transitions, and writes `artifacts/rescue-relay-demo.mp4`. The generated files stay outside version control. The final MP4 contains readable captions and a silent AAC track; narration can be added separately without changing the reproducible visual cut.
+
 ## Repository map
 
 ```text
@@ -166,6 +176,7 @@ tests/              unit, integration, and agent-loop tests
 docs/               architecture, deployment, pitch, and demo materials
 evals/              reproducible evaluation cases and runner
 examples/           executable normalized event payload
+scripts/            verification, AgentCore packaging, and demo capture
 ```
 
 See the [requirements and judging matrix](docs/requirements-matrix.md) for direct evidence links and the [pilot plan](docs/pilot-plan.md) for how the impact hypothesis would be validated with a real food-rescue network.

@@ -1,5 +1,9 @@
 # Demo video script (4:30 target)
 
+## Reproducible caption-led cut
+
+Run `./scripts/record-demo.sh` from the repository root to create `artifacts/rescue-relay-demo.mp4`. The automated cut is approximately 2:40, covers every section below, validates the audit download while recording, and includes an upload-compatible silent audio track. It is a complete caption-led submission candidate; optional narration may be layered over it for a more personal final presentation.
+
 ## 0:00–0:35 — The human problem
 
 “A food-bank coordinator’s inbox is full of expiring offers. Every message triggers the same scramble: interpret the food, check which pantry needs it, verify storage and hours, split the load, then chase approval. RescueRelay gives that time back before the food loses shelf life.”
