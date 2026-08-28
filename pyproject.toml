@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rescue-relay"
+version = "0.1.0"
+description = "A Strands-powered food-rescue dispatch agent for community pantries"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = { text = "MIT" }
+authors = [{ name = "Tarang Jammalamadaka" }]
+dependencies = [
+  "bedrock-agentcore>=1.0.0",
+  "fastapi>=0.116.0",
+  "pydantic>=2.11.0",
+  "strands-agents>=1.54.0,<2",
+  "uvicorn[standard]>=0.35.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/tarang-tj/rescue-relay"
+Repository = "https://github.com/tarang-tj/rescue-relay"
+Issues = "https://github.com/tarang-tj/rescue-relay/issues"
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.28.0",
+  "pytest>=8.4.0",
+  "pytest-cov>=6.2.0",
+  "ruff>=0.12.0",
+]
+
+[project.scripts]
+rescue-relay = "rescue_relay.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rescue_relay"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]

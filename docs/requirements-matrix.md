@@ -1,0 +1,38 @@
+# Hackathon requirements and judging evidence
+
+This matrix separates implemented evidence from deployment and submission work that requires external accounts.
+
+## Required submission artifacts
+
+| Requirement | Status | Evidence / owner action |
+|---|---|---|
+| New AI agent built with Strands Agents SDK | Implemented | `src/rescue_relay/agent.py`, four typed tools, real Strands tool loop, default-deny hook |
+| Handles a real repetitive task end to end | Implemented in replay | Offer intake → constraints → deterministic matching → persisted outreach drafts → human decision |
+| Text description | Ready | `docs/devpost-submission.md` |
+| Public code repository URL | External action | Push this repository publicly and paste its URL into Devpost |
+| All source, assets, and setup instructions | Ready locally | `src/`, `frontend/`, `docs/`, `README.md`, lockfiles, Dockerfile |
+| MIT or Apache license visible in repository About | License file ready; About external | `LICENSE`; set the GitHub About license to MIT |
+| README | Ready | `README.md` |
+| Architecture diagram | Ready | `docs/architecture.png`, `docs/architecture.svg`, `docs/architecture.md` |
+| Demo video, maximum five minutes | Script ready; recording external | `docs/demo-script.md` targets 4:30 and covers a working end-to-end run |
+| Problem, audience, and importance in pitch | Ready | Demo script sections 0:00–0:35 and 3:55–4:30 |
+| AWS Builder ID | External action | Add the entrant's Builder ID in Devpost |
+| Optional live demo | Not claimed | AgentCore entrypoint and deployment guide are ready; authenticated deployment remains external |
+| Optional builder.aws.com post | Draft ready; publishing external | `docs/builder-post.md`; title already contains “Agents for Humans” |
+
+## Judging evidence
+
+| Criterion | Strongest evidence | Demo moment |
+|---|---|---|
+| Technological implementation | Strands tool loop; structural hook; deterministic matcher; persisted state machine; directly tested AgentCore entrypoint; 23 backend tests at 98% coverage; 5 deterministic evals; desktop/mobile browser flows | 0:35–1:25 and 3:15–3:55 |
+| Design | Responsive rescue desk; evidence timeline; pickup table; persisted draft previews; decision rail; portable audit export | 0:35–3:15 |
+| Potential impact | Specific food-rescue coordinator workflow; 412 lb scenario; transparent demo estimates; field-validation plan | 0:00–0:35 and 3:55–4:30 |
+| Creativity and originality | Quiet coordination agent rather than chat; reversible work automated while commitments remain human-owned | 2:20–3:15 |
+| Presentation | 4:30 script demonstrates the complete loop, evidence, decision transition, architecture, and impact boundary | Entire video |
+
+## Claim boundaries
+
+- **Verified locally:** the scripted replay executes the real Strands agent and tools; 23 backend tests, 5 evals, production builds, isolated-wheel smoke, browser flows, decision transitions, audit download, and compiled static serving pass. See `docs/verification.md`.
+- **Implemented but credential-dependent:** Bedrock live-model mode and the AgentCore runtime entrypoint.
+- **Not yet claimed:** a deployed live URL, a production inbox connector, outbound message delivery, background polling, or field-validated impact.
+- **Experiment to run:** the pilot in `docs/pilot-plan.md` determines whether the product actually reduces coordinator handling time without raising correction or missed-window rates.

@@ -1,0 +1,33 @@
+[
+  {
+    "id": "baseline-complete-match",
+    "description": "All 412 lb are allocated without exceeding pantry capacity.",
+    "expected_pounds": 412,
+    "expected_dispatches": 4
+  },
+  {
+    "id": "ambiguous-split-is-visible",
+    "description": "The Harbor Market produce load is split and therefore cannot be silently committed.",
+    "offer_id": "offer-harbor",
+    "expected_allocations": 2,
+    "expected_state": "awaiting_approval"
+  },
+  {
+    "id": "grounded-destination",
+    "description": "Every allocation cites a declared need, remaining capacity, and route distance.",
+    "reason_tokens": ["Needs", "capacity", "mi away"]
+  },
+  {
+    "id": "pickup-date-grounding",
+    "description": "A next-day offer stays explicitly labeled Tomorrow rather than being flattened into today.",
+    "offer_id": "offer-orchard",
+    "expected_window_prefix": "Tomorrow"
+  },
+  {
+    "id": "partial-allocation-is-visible",
+    "description": "When eligible capacity is smaller than an offer, the unmatched remainder remains visible.",
+    "offer_pounds": 260,
+    "expected_matched_pounds": 200,
+    "expected_unallocated_pounds": 60
+  }
+]
