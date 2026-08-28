@@ -8,7 +8,8 @@ Last full local run: **2026-08-28**, using `./scripts/verify.sh` on macOS with P
 | Ruff | Pass | All Python source, tests, and eval runner |
 | Pytest | **38 passed** | Agent loop, custom event inputs, payload restart persistence, same-runtime serialization, cross-store and bounded-receipt deduplication, collision rejection, authenticated live intake, AgentCore actions and current CLI envelope, API, CLI, matcher, state transitions, failure paths, domain validation, and safety hook |
 | Python coverage | **97.9% total** | Domain, event orchestrator, API, agent assembly, and CLI 100%; AgentCore entrypoint 98%; service 99%; enforced floor 95% |
-| AgentCore deployment bootstrap | Pass | Pinned `@aws/agentcore` 0.28.1 generated and schema-validated a Python 3.12, AWS-IAM-authorized BYO runtime project |
+| AgentCore deployment bootstrap | Pass | Stable `@aws/agentcore` 0.28.1 generated and schema-validated a Python 3.12, AWS-IAM-authorized BYO runtime project with an explicit account/region target path |
+| AgentCore CodeZip audit | Pass | CLI packaging succeeds; archive inspection requires runtime code and lockfiles while rejecting local databases, repository metadata, docs, examples, frontend files, and tests |
 | Deterministic evals | **5/5 passed** | Full allocation, ambiguous split, evidence grounding, Tomorrow date, partial remainder |
 | Python distribution | Pass | Source archive and wheel built; wheel separately installed and smoke-tested in an isolated virtual environment |
 | Clean frontend install | Pass | `npm ci`; 0 reported vulnerabilities |
@@ -22,4 +23,4 @@ Last full local run: **2026-08-28**, using `./scripts/verify.sh` on macOS with P
 
 Two warnings originate in installed dependencies: AgentCore currently uses a Pydantic class-based config, and FastAPI's compatibility `TestClient` re-exports Starlette's deprecated httpx-backed client. Neither warning is emitted by RescueRelay source or causes a failed gate.
 
-The public repository's [GitHub Actions workflow](https://github.com/tarang-tj/rescue-relay/actions/workflows/ci.yml) independently reproduces the test and container gates on clean Ubuntu runners. The workflow uses read-only repository permissions and immutable commit pins for third-party actions.
+The public repository's [GitHub Actions workflow](https://github.com/tarang-tj/rescue-relay/actions/workflows/ci.yml) independently reproduces the test, AgentCore packaging, and container gates on clean Ubuntu runners. The workflow uses read-only repository permissions and immutable commit pins for third-party actions.

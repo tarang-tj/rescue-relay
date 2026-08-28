@@ -128,7 +128,7 @@ No credentials are stored by the project. Live execution requires access to the 
 {"action": "event", "event_id": "judge-demo-0001", "source": "demo_inbox", "mode": "demo"}
 ```
 
-Live events include validated `offers` and `partners` arrays in the same shape as `examples/offer-event.json`. The `event` action is content-safe idempotent: replaying the same source ID and payload returns its durable receipt without rerunning the agent, while changing content under that ID returns a conflict. The runtime also supports `scan`, `dashboard`, `approve`, and `resolve`. The current AgentCore CLI's text-wrapped JSON invocation format is accepted and tested as well. The runtime uses `/tmp/rescue-relay-agentcore.db`, keeping writes within AgentCore's writable runtime path. Run `./scripts/prepare-agentcore.sh` to generate a pinned, AWS-IAM-protected deployment project, and see `docs/agentcore.md` for the verified deployment workflow.
+Live events include validated `offers` and `partners` arrays in the same shape as `examples/offer-event.json`. The `event` action is content-safe idempotent: replaying the same source ID and payload returns its durable receipt without rerunning the agent, while changing content under that ID returns a conflict. The runtime also supports `scan`, `dashboard`, `approve`, and `resolve`. The current AgentCore CLI's text-wrapped JSON invocation format is accepted and tested as well. The runtime uses `/tmp/rescue-relay-agentcore.db`, keeping writes within AgentCore's writable runtime path. Run `./scripts/prepare-agentcore.sh` to generate a pinned, AWS-IAM-protected deployment project. The generator stages only runtime code and lockfiles; `scripts/verify-agentcore-package.sh` opens the resulting ZIP and rejects local databases or development assets. See `docs/agentcore.md` for the account-target and deployment workflow.
 
 ## Verification
 
@@ -150,6 +150,7 @@ The underlying commands are:
 uv run ruff check .
 uv run pytest --cov=rescue_relay --cov-report=term-missing --cov-fail-under=95
 uv run python evals/run_evals.py
+./scripts/verify-agentcore-package.sh
 cd frontend && npm run lint && npm run build && npm run test:e2e
 docker build -t rescue-relay .
 ```

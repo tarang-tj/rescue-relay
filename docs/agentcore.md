@@ -16,24 +16,36 @@ AWS now recommends the Node-based AgentCore CLI; the retired Python starter tool
 From the repository root:
 
 ```bash
+export RESCUERELAY_AWS_ACCOUNT_ID=123456789012
+export RESCUERELAY_AWS_REGION=us-west-2
 ./scripts/prepare-agentcore.sh
 cd .agentcore-build/RescueRelay
 ```
 
-The generated deployment project is intentionally ignored by Git because it contains account-specific targets and deployment state. The script refuses to overwrite an existing project. Set `RESCUERELAY_AGENTCORE_OUTPUT` to generate it elsewhere, or `AGENTCORE_CLI_VERSION` to test a newer CLI release deliberately.
+Replace the example account ID and region with the actual deployment target. Both variables are required together; the script validates them and writes a named `default` target to `agentcore/aws-targets.json`. If they are omitted, project generation and schema validation still work, but deployment deliberately stops until a target is supplied.
+
+The generated deployment project is intentionally ignored by Git because it contains account-specific targets and deployment state. The script refuses to overwrite an existing project. It also stages a minimal runtime source tree instead of packaging the repository root. Set `RESCUERELAY_AGENTCORE_OUTPUT` to generate it elsewhere, or `AGENTCORE_CLI_VERSION` to test a newer CLI release deliberately.
+
+Verify both the generated configuration and the exact CodeZip contents:
+
+```bash
+./scripts/verify-agentcore-package.sh
+```
+
+That gate requires the application entrypoint and lockfiles and rejects repository metadata, local databases, documentation, examples, frontend files, and tests from the deployment ZIP. It runs in the full local verifier and GitHub Actions.
 
 Inspect the proposed infrastructure before creating resources:
 
 ```bash
 npx --yes @aws/agentcore@0.28.1 validate
-npx --yes @aws/agentcore@0.28.1 deploy --dry-run
+npx --yes @aws/agentcore@0.28.1 deploy --dry-run --target default
 ```
 
 Then deploy and inspect status:
 
 ```bash
-npx --yes @aws/agentcore@0.28.1 deploy
-npx --yes @aws/agentcore@0.28.1 status
+npx --yes @aws/agentcore@0.28.1 deploy --target default
+npx --yes @aws/agentcore@0.28.1 status --target default
 ```
 
 ## Invoke the runtime

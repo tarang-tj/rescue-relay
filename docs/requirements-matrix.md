@@ -17,7 +17,7 @@ This matrix separates implemented evidence from deployment and submission work t
 | Demo video, maximum five minutes | Script ready; recording external | `docs/demo-script.md` targets 4:30 and covers a working end-to-end run |
 | Problem, audience, and importance in pitch | Ready | Demo script sections 0:00–0:35 and 3:55–4:30 |
 | AWS Builder ID | External action | Add the entrant's Builder ID in Devpost |
-| Optional live demo | Not claimed | AgentCore entrypoint, current-CLI bootstrap script, AWS IAM config, and deployment guide are ready; authenticated deployment remains external |
+| Optional live demo | Not claimed | AgentCore entrypoint, current stable-CLI bootstrap, explicit target config, minimal CodeZip audit, AWS IAM config, and deployment guide are ready; authenticated deployment remains external |
 | Optional builder.aws.com post | Draft ready; publishing external | `docs/builder-post.md`; title already contains “Agents for Humans” |
 
 ## Judging evidence
@@ -32,7 +32,7 @@ This matrix separates implemented evidence from deployment and submission work t
 
 ## Claim boundaries
 
-- **Verified locally and in clean CI:** the event-driven scripted replay executes the real Strands agent and tools; caller-supplied offers and partners drive those tools; normalized payloads survive a store restart; exact duplicates cannot rerun the event while same-ID content changes are rejected; backend tests above the enforced coverage floor, 5 evals, production builds, isolated-wheel smoke, browser flows, decision transitions, audit download, compiled static serving, Docker build, and current AgentCore CLI project validation pass. See `docs/verification.md` and the public [GitHub Actions workflow](https://github.com/tarang-tj/rescue-relay/actions/workflows/ci.yml).
+- **Verified locally and in clean CI:** the event-driven scripted replay executes the real Strands agent and tools; caller-supplied offers and partners drive those tools; normalized payloads survive a store restart; exact duplicates cannot rerun the event while same-ID content changes are rejected; backend tests above the enforced coverage floor, 5 evals, production builds, isolated-wheel smoke, browser flows, decision transitions, audit download, compiled static serving, Docker build, AgentCore project validation, and minimal CodeZip inspection pass. See `docs/verification.md` and the public [GitHub Actions workflow](https://github.com/tarang-tj/rescue-relay/actions/workflows/ci.yml).
 - **Implemented but credential-dependent:** Bedrock live-model mode and the AgentCore runtime entrypoint.
 - **Not yet claimed:** a deployed live URL, a production inbox connector, outbound message delivery, background polling, or field-validated impact.
 - **Experiment to run:** the pilot in `docs/pilot-plan.md` determines whether the product actually reduces coordinator handling time without raising correction or missed-window rates.
