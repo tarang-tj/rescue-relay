@@ -14,7 +14,7 @@ This matrix separates implemented evidence from deployment and submission work t
 | MIT or Apache license visible in repository About | Complete | GitHub detects the root `LICENSE` as MIT and exposes it in the public repository About panel |
 | README | Ready | `README.md` |
 | Architecture diagram | Ready | `docs/architecture.png`, `docs/architecture.svg`, `docs/architecture.md` |
-| Demo video, maximum five minutes | Script ready; recording external | `docs/demo-script.md` targets 4:30 and covers a working end-to-end run |
+| Demo video, maximum five minutes | Rendered and inspected locally; public upload external | Reproducible 2:40 caption-led MP4 demonstrates the working end-to-end run, audit export, approval boundary, architecture, and impact; `scripts/record-demo.sh` regenerates it |
 | Problem, audience, and importance in pitch | Ready | Demo script sections 0:00–0:35 and 3:55–4:30 |
 | AWS Builder ID | External action | Add the entrant's Builder ID in Devpost |
 | Optional live demo | Not claimed | AgentCore entrypoint, current stable-CLI bootstrap, explicit target config, minimal CodeZip audit, AWS IAM config, and deployment guide are ready; authenticated deployment remains external |
@@ -28,7 +28,7 @@ This matrix separates implemented evidence from deployment and submission work t
 | Design | Responsive rescue desk; evidence timeline; pickup table; persisted draft previews; decision rail; portable audit export | 0:35–3:15 |
 | Potential impact | Specific food-rescue coordinator workflow; 412 lb scenario; transparent demo estimates; field-validation plan | 0:00–0:35 and 3:55–4:30 |
 | Creativity and originality | Quiet coordination agent rather than chat; reversible work automated while commitments remain human-owned | 2:20–3:15 |
-| Presentation | 4:30 script demonstrates the complete loop, evidence, decision transition, architecture, and impact boundary | Entire video |
+| Presentation | Inspected 2:40 caption-led cut demonstrates the complete loop, evidence, decision transition, architecture, and impact boundary; synchronized narration tooling is included | Entire video |
 
 ## Claim boundaries
 

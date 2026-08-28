@@ -1,8 +1,12 @@
-# Demo video script (4:30 target)
+# Demo video script and reproducible 2:40 cut
 
 ## Reproducible caption-led cut
 
 Run `./scripts/record-demo.sh` from the repository root to create `artifacts/rescue-relay-demo.mp4`. The automated cut is approximately 2:40, covers every section below, validates the audit download while recording, and includes an upload-compatible silent audio track. It is a complete caption-led submission candidate; optional narration may be layered over it for a more personal final presentation.
+
+On macOS, `./scripts/narrate-demo.sh` adds a synchronized system-voice pitch and writes `artifacts/rescue-relay-demo-narrated.mp4` without re-encoding the verified video stream. The caption master remains the source of truth, so a personally recorded voiceover can replace this optional track later.
+
+## Manual 4:30 voiceover outline
 
 ## 0:00–0:35 — The human problem
 

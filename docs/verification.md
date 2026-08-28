@@ -18,6 +18,7 @@ Last full local run: **2026-08-28**, using `./scripts/verify.sh` on macOS with P
 | Browser tests | **2 passed, 2 intentionally skipped by project routing** | One desktop evidence/rejection/audit/reset flow and one emulated iPhone control/overflow flow |
 | Browser flake check | Pass | Complete Playwright suite passed twice consecutively after per-process database isolation |
 | Caption-led demo render | **Pass: 2:40** | Playwright drove the complete Strands workflow and approvals, parsed the downloaded audit bundle, and produced a 1600×900 H.264/yuv420p MP4 with an AAC compatibility track |
+| Narrated demo render | **Pass: 2:40** | Thirteen guarded narration cues, −16.0 LUFS integrated loudness, −3.5 dBFS true peak, 48 kHz stereo AAC; H.264 stream hash exactly matches the inspected caption master |
 | Production static serving | Pass | Compiled UI returned over FastAPI and `/api/health` returned HTTP 200 |
 | Secret/trailing-whitespace scan | Pass | No recognized credential patterns or trailing whitespace in tracked-source candidates |
 | Docker image | **Pass in GitHub Actions** | A clean Ubuntu runner built the multi-stage image; the runtime uses non-root UID/GID 10001 and includes a health check |

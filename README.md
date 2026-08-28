@@ -167,6 +167,14 @@ Create the caption-led, upload-ready hackathon cut with one command (requires `f
 
 The recorder starts isolated backend and frontend processes, drives the real Strands workflow, validates the downloaded audit bundle, records both approval transitions, and writes `artifacts/rescue-relay-demo.mp4`. The generated files stay outside version control. The final MP4 contains readable captions and a silent AAC track; narration can be added separately without changing the reproducible visual cut.
 
+On macOS, add the synchronized pitch narration with the built-in speech engine:
+
+```bash
+./scripts/narrate-demo.sh
+```
+
+This preserves the verified video stream and writes `artifacts/rescue-relay-demo-narrated.mp4`. Voice and speaking rate are configurable with `RESCUERELAY_NARRATION_VOICE` and `RESCUERELAY_NARRATION_RATE`.
+
 ## Repository map
 
 ```text

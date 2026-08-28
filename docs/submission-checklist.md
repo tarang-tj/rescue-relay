@@ -6,7 +6,8 @@
 - [ ] Upload the ready `docs/architecture.png` diagram.
 - [x] Render and inspect the reproducible caption-led demo using `docs/demo-script.md` (2:40, below the 5-minute maximum).
 - [x] Confirm the rendered video covers problem, audience, why it matters, the working product, and technical implementation.
-- [ ] Optionally add narration, upload the final video, and add its public URL to Devpost.
+- [x] Render and technically inspect a synchronized narrated candidate while preserving the verified caption master.
+- [ ] Choose the caption-only or narrated candidate, upload it, and add its public URL to Devpost.
 - [ ] Add AWS Builder ID to the submission.
 - [ ] Optional: deploy the AgentCore entrypoint and add the live URL.
 - [x] Generate, validate, package, and inspect the AWS-IAM-protected AgentCore project with the current stable CLI.
