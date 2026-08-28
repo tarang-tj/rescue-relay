@@ -1,13 +1,13 @@
 # Verification record
 
-Last full local run: **2026-08-28**, using `./scripts/verify.sh` on macOS with Python 3.12 and Node.js 22.
+Last clean public-checkout run: **2026-08-28**, using `./scripts/verify.sh` on macOS with Python 3.12 and Node.js 22 at commit `9767eb9`.
 
 | Gate | Result | Scope |
 |---|---|---|
 | Locked Python environment | Pass | 65 packages resolved from `uv.lock` |
 | Ruff | Pass | All Python source, tests, and eval runner |
 | Pytest | **38 passed** | Agent loop, custom event inputs, payload restart persistence, same-runtime serialization, cross-store and bounded-receipt deduplication, collision rejection, authenticated live intake, AgentCore actions and current CLI envelope, API, CLI, matcher, state transitions, failure paths, domain validation, and safety hook |
-| Python coverage | **97.9% total** | Domain, event orchestrator, API, agent assembly, and CLI 100%; AgentCore entrypoint 98%; service 99%; enforced floor 95% |
+| Python coverage | **97.8% total** | 97.77% in a fresh public clone; domain, event orchestrator, agent assembly, and CLI 100%; API and service 99%; AgentCore entrypoint 98%; enforced floor 95% |
 | AgentCore deployment bootstrap | Pass | Stable `@aws/agentcore` 0.28.1 generated and schema-validated a Python 3.12, AWS-IAM-authorized BYO runtime project with an explicit account/region target path |
 | AgentCore CodeZip audit | Pass | CLI packaging succeeds; archive inspection requires runtime code and lockfiles while rejecting local databases, repository metadata, docs, examples, frontend files, and tests |
 | Deterministic evals | **5/5 passed** | Full allocation, ambiguous split, evidence grounding, Tomorrow date, partial remainder |
